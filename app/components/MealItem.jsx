@@ -19,7 +19,6 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
       return;
     }
 
-    console.log("✏️ Ukládám změny:", editedText);
     onEdit(meal.$id, editedText);
     setIsEditing(false);
   };
@@ -52,7 +51,6 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
         ) : (
           <TouchableOpacity
             onPress={() => {
-              console.log("✏️ Editace jídla:", meal.$id);
               setIsEditing(true);
               setTimeout(() => inputRef.current?.focus(), 100);
             }}>
@@ -62,7 +60,6 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
 
         <TouchableOpacity
           onPress={() => {
-            console.log("🗑 Mažu jídlo:", meal.$id);
             onDelete(meal.$id);
           }}>
           <Text style={styles.deleteButton}>Delete</Text>

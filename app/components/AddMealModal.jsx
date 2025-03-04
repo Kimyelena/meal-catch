@@ -1,51 +1,49 @@
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
   TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Modal,
 } from "react-native";
+import { useState } from "react";
 
-const AddMealModal = ({
-  modalVisible,
-  setModalVisible,
-  newMeal,
-  setNewMeal,
-  AddMeal,
-}) => {
+const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
+  const [mealName, setMealName] = useState("");
+
   return (
     <Modal
-      visible={modalVisible}
       animationType="slide"
-      transparent
+      transparent={true}
+      visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}>
-      <View style={styles.modalOverlay}>
+      <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Add a New Meal</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter..."
-            placeholderTextColor="#aaa"
-            value={newMeal}
-            onChangeText={setNewMeal}
+            placeholder="Enter meal name"
+            value={mealName}
+            onChangeText={setMealName}
           />
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => setModalVisible(false)}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.saveButton}
-              onPress={() => {
-                console.log("Save button clicked");
-                AddMeal();
-              }}>
-              <Text style={styles.saveButtonText}>Save</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => {
+              if (mealName.trim() === "") {
+                alert("Meal name cannot be empty");
+                return;
+              }
+              addMeal(mealName); // ✅ Call the function passed as a prop
+              setMealName("");
+              setModalVisible(false);
+            }}>
+            <Text style={styles.addButtonText}>Add Meal</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}>
+            <Text style={styles.closeButtonText}>Close</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </Modal>
@@ -53,58 +51,52 @@ const AddMealModal = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    backgroundColor: "#fff",
+    width: 300,
     padding: 20,
+    backgroundColor: "#fff",
     borderRadius: 10,
-    width: "80%",
+    alignItems: "center",
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
+    marginBottom: 15,
   },
   input: {
+    width: "100%",
+    padding: 10,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
     marginBottom: 15,
   },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  addButton: {
+    backgroundColor: "#28a745",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
   },
-  cancelButton: {
-    backgroundColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    marginRight: 10,
-    alignItems: "center",
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  saveButton: {
-    backgroundColor: "#007bff",
-    padding: 10,
-    borderRadius: 5,
-    flex: 1,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    fontSize: 16,
+  addButtonText: {
     color: "#fff",
+    fontSize: 16,
+  },
+  closeButton: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    backgroundColor: "#ff3b30",
+    borderRadius: 8,
+  },
+  closeButtonText: {
+    color: "#fff",
+    fontSize: 16,
   },
 });
 

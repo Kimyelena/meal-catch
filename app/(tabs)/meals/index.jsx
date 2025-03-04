@@ -1,17 +1,10 @@
 import { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from "react-native";
+import { View, Text, StyleSheet, Alert, ActivityIndicator } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth } from "../contexts/AuthContext";
-import MealList from "../components/MealList";
-import AddMealModal from "../components/AddMealModal";
-import mealService from "../services/mealService";
+import { useAuth } from "../../contexts/AuthContext";
+import MealList from "../../components/MealList";
+import AddMealModal from "../../components/AddMealModal";
+import mealService from "../../services/mealService";
 
 const MealScreen = () => {
   const router = useRouter();
@@ -48,24 +41,6 @@ const MealScreen = () => {
     }
 
     setLoading(false);
-  };
-
-  const AddMeal = async () => {
-    if (newMeal.trim() === "") {
-      Alert.alert("Error", "Meal name cannot be empty");
-      return;
-    }
-
-    const response = await mealService.addMeal(user.$id, newMeal);
-
-    if (response.error) {
-      Alert.alert("Error", response.error);
-    } else {
-      setMeals([...meals, response.data]);
-    }
-
-    setNewMeal("");
-    setModalVisible(false);
   };
 
   const deleteMeal = async (id) => {
@@ -124,21 +99,17 @@ const MealScreen = () => {
         </>
       )}
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => {
-          setModalVisible(true);
-        }}>
-        <Text style={styles.addButtonText}>+ Add Meal</Text>
-      </TouchableOpacity>
-
+      {/* Modal for adding a new meal */}
       {modalVisible && (
         <AddMealModal
           modalVisible={modalVisible}
           setModalVisible={setModalVisible}
           newMeal={newMeal}
           setNewMeal={setNewMeal}
-          AddMeal={AddMeal}
+          addMeal={() => {
+            setModalVisible(false);
+            fetchMeals();
+          }}
         />
       )}
     </View>
@@ -150,21 +121,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#fff",
-  },
-  addButton: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: "#007bff",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  addButtonText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "bold",
   },
   errorText: {
     color: "red",
