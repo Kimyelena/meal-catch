@@ -13,13 +13,19 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
   const inputRef = useRef(null);
 
   const handleSave = () => {
-    if (editedText.trim() === "") return;
+    if (editedText.trim() === "") {
+      setEditedText(meal.text);
+      setIsEditing(false);
+      return;
+    }
+
+    console.log("✏️ Ukládám změny:", editedText);
     onEdit(meal.$id, editedText);
     setIsEditing(false);
   };
 
   return (
-    <View style={styles.MealItem}>
+    <View style={styles.mealItem}>
       {isEditing ? (
         <TextInput
           ref={inputRef}
@@ -33,6 +39,7 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
       ) : (
         <Text style={styles.mealText}>{meal.text}</Text>
       )}
+
       <View style={styles.actions}>
         {isEditing ? (
           <TouchableOpacity
@@ -40,16 +47,25 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
               handleSave();
               inputRef.current?.blur();
             }}>
-            <Text style={styles.edit}>💾</Text>
+            <Text style={styles.saveButton}>Save</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={() => setIsEditing(true)}>
-            <Text style={styles.edit}>✏️</Text>
+          <TouchableOpacity
+            onPress={() => {
+              console.log("✏️ Editace jídla:", meal.$id);
+              setIsEditing(true);
+              setTimeout(() => inputRef.current?.focus(), 100);
+            }}>
+            <Text style={styles.editButton}>Edit</Text>
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity onPress={() => onDelete(meal.$id)}>
-          <Text style={styles.delete}>❌</Text>
+        <TouchableOpacity
+          onPress={() => {
+            console.log("🗑 Mažu jídlo:", meal.$id);
+            onDelete(meal.$id);
+          }}>
+          <Text style={styles.deleteButton}>Delete</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -57,9 +73,10 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
 };
 
 const styles = StyleSheet.create({
-  MealItem: {
+  mealItem: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#f5f5f5",
     padding: 15,
     borderRadius: 5,
@@ -68,17 +85,29 @@ const styles = StyleSheet.create({
   mealText: {
     fontSize: 18,
   },
-  delete: {
+  input: {
     fontSize: 18,
-    color: "red",
+    borderBottomWidth: 1,
+    borderBottomColor: "#aaa",
+    flex: 1,
   },
   actions: {
     flexDirection: "row",
+    alignItems: "center",
   },
-  edit: {
-    fontSize: 18,
-    marginRight: 10,
+  editButton: {
+    fontSize: 16,
     color: "blue",
+    marginRight: 10,
+  },
+  saveButton: {
+    fontSize: 16,
+    color: "green",
+    marginRight: 10,
+  },
+  deleteButton: {
+    fontSize: 16,
+    color: "red",
   },
 });
 

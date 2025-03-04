@@ -1,11 +1,11 @@
 import { View, FlatList } from "react-native";
 import MealItem from "./MealItem";
 
-const MealList = ({ meal, onDelete, onEdit }) => {
+const MealList = ({ meals, onDelete, onEdit }) => {
   return (
     <View>
       <FlatList
-        data={meal}
+        data={meals}
         keyExtractor={(item) => item.$id}
         renderItem={({ item }) => (
           <MealItem meal={item} onDelete={onDelete} onEdit={onEdit} />

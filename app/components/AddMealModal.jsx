@@ -12,7 +12,7 @@ const AddMealModal = ({
   setModalVisible,
   newMeal,
   setNewMeal,
-  addMeal,
+  AddMeal,
 }) => {
   return (
     <Modal
@@ -37,7 +37,12 @@ const AddMealModal = ({
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.saveButton} onPress={addMeal}>
+            <TouchableOpacity
+              style={styles.saveButton}
+              onPress={() => {
+                console.log("Save button clicked");
+                AddMeal();
+              }}>
               <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
           </View>

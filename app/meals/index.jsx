@@ -13,7 +13,7 @@ import MealList from "../components/MealList";
 import AddMealModal from "../components/AddMealModal";
 import mealService from "../services/mealService";
 
-const NoteScreen = () => {
+const MealScreen = () => {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
 
@@ -31,13 +31,13 @@ const NoteScreen = () => {
 
   useEffect(() => {
     if (user) {
-      fetchNotes();
+      fetchMeals();
     }
   }, [user]);
 
-  const fetchNotes = async () => {
+  const fetchMeals = async () => {
     setLoading(true);
-    const response = await mealService.getMeals(user.$id);
+    const response = await mealService.getMeals(user?.$id);
 
     if (response.error) {
       setError(response.error);
@@ -50,9 +50,11 @@ const NoteScreen = () => {
     setLoading(false);
   };
 
-  // Add New Note
   const AddMeal = async () => {
-    if (newMeal.trim() === "") return;
+    if (newMeal.trim() === "") {
+      Alert.alert("Error", "Meal name cannot be empty");
+      return;
+    }
 
     const response = await mealService.addMeal(user.$id, newMeal);
 
@@ -66,9 +68,8 @@ const NoteScreen = () => {
     setModalVisible(false);
   };
 
-  // Delete Note
-  const deleteNote = async (id) => {
-    Alert.alert("Delete Note", "Are you sure you want to delete this note?", [
+  const deleteMeal = async (id) => {
+    Alert.alert("Delete Meal", "Are you sure you want to delete this meal?", [
       {
         text: "Cancel",
         style: "cancel",
@@ -81,25 +82,25 @@ const NoteScreen = () => {
           if (response.error) {
             Alert.alert("Error", response.error);
           } else {
-            setNotes(meals.filter((meal) => meal.$id !== id));
+            setMeals(meals.filter((meal) => meal.$id !== id));
           }
         },
       },
     ]);
   };
 
-  // Edit Note
   const editMeal = async (id, newText) => {
     if (!newText.trim()) {
-      Alert.alert("Error", "Note text cannot be empty");
+      Alert.alert("Error", "Meal text cannot be empty");
       return;
     }
 
     const response = await mealService.updateMeal(id, newText);
+
     if (response.error) {
       Alert.alert("Error", response.error);
     } else {
-      setNotes((prevMeals) =>
+      setMeals((prevMeals) =>
         prevMeals.map((meal) =>
           meal.$id === id ? { ...meal, text: response.data.text } : meal
         )
@@ -115,28 +116,31 @@ const NoteScreen = () => {
         <>
           {error && <Text style={styles.errorText}>{error}</Text>}
 
-          {notes.length === 0 ? (
-            <Text style={styles.noNotesText}>You have no notes</Text>
+          {meals.length === 0 ? (
+            <Text style={styles.noMealsText}>You have no meals</Text>
           ) : (
-            <MealList notes={notes} onDelete={deleteNote} onEdit={editNote} />
+            <MealList meals={meals} onDelete={deleteMeal} onEdit={editMeal} />
           )}
         </>
       )}
 
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.addButtonText}>+ Add Note</Text>
+        onPress={() => {
+          setModalVisible(true);
+        }}>
+        <Text style={styles.addButtonText}>+ Add Meal</Text>
       </TouchableOpacity>
 
-      {/* Modal */}
-      <AddMealModal
-        modalVisible={modalVisible}
-        setModalVisible={setModalVisible}
-        newMeal={newMeal}
-        setNewMeal={setNewMeal}
-        AddMeal={AddMeal}
-      />
+      {modalVisible && (
+        <AddMealModal
+          modalVisible={modalVisible}
+          setModalVisible={setModalVisible}
+          newMeal={newMeal}
+          setNewMeal={setNewMeal}
+          AddMeal={AddMeal}
+        />
+      )}
     </View>
   );
 };
@@ -168,7 +172,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 16,
   },
-  noNotesText: {
+  noMealsText: {
     textAlign: "center",
     fontSize: 18,
     fontWeight: "bold",
@@ -177,4 +181,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NoteScreen;
+export default MealScreen;

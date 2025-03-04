@@ -11,6 +11,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 
 const AuthScreen = () => {
+  console.log("🛠 useAuth():", useAuth());
   const { login, register } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -20,6 +21,9 @@ const AuthScreen = () => {
   const [error, setError] = useState(false);
 
   const handleAuth = async () => {
+    console.log("🔄 Přihlašování...", { email, password });
+    console.log("✅ Odpověď z authService:", response);
+
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
       return;

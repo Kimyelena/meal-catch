@@ -1,30 +1,51 @@
-import { Client, Databases, Account } from "react-native-appwrite";
-import { Platform } from "react-native";
+import { account } from "./appwrite";
+import { ID } from "react-native-appwrite";
 
-const config = {
-  endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
-  projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-  db: process.env.EXPO_PUBLIC_APPWRITE_DB_ID,
-  col: {
-    meals: process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID,
+const authService = {
+  // Register a user
+  async register(email, password) {
+    try {
+      const response = await account.create(ID.unique(), email, password);
+      return response;
+    } catch (error) {
+      return {
+        error: error.message || "Registration failed. Please try agian",
+      };
+    }
+  },
+  // Login
+  async login(email, password) {
+    try {
+      const response = await account.createEmailPasswordSession(
+        email,
+        password
+      );
+      return response;
+    } catch (error) {
+      return {
+        error: error.message || "Login failed. Please check your credentials",
+      };
+    }
+  },
+  // Get logged in user
+  async getUser() {
+    try {
+      return await account.get();
+    } catch (error) {
+      return null;
+    }
+  },
+
+  // Logout user
+  async logout() {
+    try {
+      await account.deleteSession("current");
+    } catch (error) {
+      return {
+        error: error.message || "Logout failed. Please try again",
+      };
+    }
   },
 };
 
-const client = new Client()
-  .setEndpoint(config.endpoint)
-  .setProject(config.projectId);
-
-switch (Platform.OS) {
-  case "ios":
-    client.setPlatform(process.env.EXPO_PUBLIC_APPWRITE_BUNDLE_ID);
-    break;
-  case "android":
-    client.setPlatform(process.env.EXPO_PUBLIC_APPWRITE_PACKAGE_NAME);
-    break;
-}
-
-const database = new Databases(client);
-
-const account = new Account(client);
-
-export { database, config, client, account };
+export default authService;

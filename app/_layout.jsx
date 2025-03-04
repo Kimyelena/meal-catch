@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
 
 const HeaderLogout = () => {
@@ -7,7 +8,7 @@ const HeaderLogout = () => {
 
   return user ? (
     <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-      <Text style={styles.logoutText}>Logout</Text>
+      <MaterialIcons name="logout" size={24} color="#fff" />
     </TouchableOpacity>
   ) : null;
 };
@@ -25,6 +26,13 @@ const RootLayout = () => {
             fontSize: 20,
             fontWeight: "bold",
           },
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={{ padding: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          ),
           headerRight: () => <HeaderLogout />,
           contentStyle: {
             paddingHorizontal: 10,
@@ -47,11 +55,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     backgroundColor: "#ff3b30",
     borderRadius: 8,
-  },
-  logoutText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
   },
 });
 
