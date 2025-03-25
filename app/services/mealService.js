@@ -8,71 +8,85 @@ const mealService = {
   async getMeals(userId) {
     if (!userId) {
       console.error("Error: Missing userId in getMeals()");
-      return {
-        data: [],
-        error: "User ID is missing",
-      };
+      return { data: null, error: "User ID is missing" };
     }
 
     try {
       const response = await databaseService.listDocuments(dbId, colId, [
         Query.equal("user_id", userId),
       ]);
-      return response;
+      return { data: response, error: null };
     } catch (error) {
-      console.log("Error fetching meal:", error.message);
-      return { data: [], error: error.message };
+      console.error("Error fetching meal:", error.message);
+      return { data: null, error: error.message };
     }
   },
 
-  async addMeal(user_id, text, imageUris = []) {
+  async addMeal(user_id, text, description, imageUris = []) {
+    //Added description parameter
     if (!text) {
-      return { error: "Meal text cannot be empty" };
+      return { data: null, error: "Meal text cannot be empty" };
     }
 
-    // Ensure the image URIs are provided or empty
-    const images = imageUris.length > 0 ? imageUris : [];
+    if (!Array.isArray(imageUris)) {
+      return { data: null, error: "imageUris must be an array" };
+    }
 
     const data = {
       text: text,
       createdAt: new Date().toISOString(),
       user_id: user_id,
-      imageUris: imageUris, // Store the image URLs in the database
+      imageUris: imageUris,
+      description: description, //added description to data.
     };
 
-    const response = await databaseService.createDocument(
-      dbId,
-      colId,
-      data,
-      ID.unique()
-    );
+    console.log("mealService.addMeal data:", data); // Log data
 
-    if (response?.error) {
-      return { error: response.error };
+    try {
+      const response = await databaseService.createDocument(
+        dbId,
+        colId,
+        data,
+        ID.unique()
+      );
+
+      console.log("mealService.addMeal response:", response); // Log response
+
+      return { data: response, error: null };
+    } catch (error) {
+      console.error("Error adding meal:", error.message);
+      return { data: null, error: error.message };
     }
-
-    return { data: response };
   },
 
   async updateMeal(id, text) {
-    const response = await databaseService.updateDocument(dbId, colId, id, {
-      text,
-    });
-
-    if (response?.error) {
-      return { error: response.error };
+    if (!id) {
+      return { data: null, error: "Meal ID is missing" };
     }
 
-    return { data: response };
+    try {
+      const response = await databaseService.updateDocument(dbId, colId, id, {
+        text,
+      });
+      return { data: response, error: null };
+    } catch (error) {
+      console.error("Error updating meal:", error.message);
+      return { data: null, error: error.message };
+    }
   },
 
   async deleteMeal(id) {
-    const response = await databaseService.deleteDocument(dbId, colId, id);
-    if (response?.error) {
-      return { error: response.error };
+    if (!id) {
+      return { data: null, error: "Meal ID is missing" };
     }
 
-    return { success: true };
+    try {
+      await databaseService.deleteDocument(dbId, colId, id);
+      return { data: { success: true }, error: null };
+    } catch (error) {
+      console.error("Error deleting meal:", error.message);
+      return { data: null, error: error.message };
+    }
   },
 };
 

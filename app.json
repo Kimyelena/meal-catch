@@ -9,13 +9,20 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select images."
+      },
+      "permissions": ["CAMERA", "CAMERA"],
+      "bundleIdentifier": "com.anonymous.meal-catch"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/meal-catch-logo.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+
+      "permissions": ["READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE", "CAMERA"]
     },
     "web": {
       "bundler": "metro",

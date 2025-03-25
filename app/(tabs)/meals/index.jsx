@@ -1,5 +1,13 @@
-import { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Alert, ActivityIndicator } from "react-native";
+// MealScreen.js
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../contexts/AuthContext";
 import MealList from "../../components/MealList";
@@ -12,7 +20,6 @@ const MealScreen = () => {
 
   const [meals, setMeals] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newMeal, setNewMeal] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -32,13 +39,17 @@ const MealScreen = () => {
     setLoading(true);
     const response = await mealService.getMeals(user?.$id);
 
+    console.log("Fetch meals response:", response);
+
     if (response.error) {
       setError(response.error);
       Alert.alert("Error", response.error);
     } else {
-      setMeals(response.data);
+      setMeals(response.data.data);
       setError(null);
     }
+
+    console.log("Meals state after fetch:", meals);
 
     setLoading(false);
   };
@@ -83,6 +94,25 @@ const MealScreen = () => {
     }
   };
 
+  const addMeal = async (mealName, description, imageUris) => {
+    console.log("Adding meal:", { mealName, description, imageUris });
+
+    const response = await mealService.addMeal(
+      user?.$id,
+      mealName,
+      description,
+      imageUris
+    );
+
+    console.log("Database response:", response);
+
+    if (response?.error) {
+      Alert.alert("Error", response.error);
+    } else {
+      fetchMeals();
+    }
+  };
+
   return (
     <View style={styles.container}>
       {loading ? (
@@ -99,19 +129,19 @@ const MealScreen = () => {
         </>
       )}
 
-      {/* Modal for adding a new meal */}
       {modalVisible && (
         <AddMealModal
           modalVisible={modalVisible}
           setModalVisible={setModalVisible}
-          newMeal={newMeal}
-          setNewMeal={setNewMeal}
-          addMeal={() => {
-            setModalVisible(false);
-            fetchMeals();
-          }}
+          addMeal={addMeal}
         />
       )}
+
+      <TouchableOpacity
+        style={styles.openModalButton}
+        onPress={() => setModalVisible(true)}>
+        <Text style={styles.openModalButtonText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -134,6 +164,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#555",
     marginTop: 15,
+  },
+  openModalButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#007bff",
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  openModalButtonText: {
+    color: "#fff",
+    fontSize: 24,
+    fontWeight: "bold",
   },
 });
 

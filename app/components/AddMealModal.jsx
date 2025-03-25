@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,16 +8,15 @@ import {
   Modal,
   Image,
   Alert,
+  ScrollView,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker"; // Import ImagePicker from Expo
-import { Ionicons } from "react-native-vector-icons"; // Import Ionicons for close button icon
+import * as ImagePicker from "expo-image-picker";
 
 const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUris, setImageUris] = useState([]);
+  const [imageUris, setImageUris] = useState([]); // Initialize as an empty array
 
-  // Function to request permissions
   const requestPermissions = async () => {
     const { status: mediaLibraryStatus } =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -31,17 +30,16 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     }
   };
 
-  // Function to open the camera
   const openCamera = async () => {
-    await requestPermissions(); // Request permissions before opening the camera
+    await requestPermissions();
 
     try {
       const result = await ImagePicker.launchCameraAsync({
-        mediaType: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         quality: 1,
       });
 
-      if (!result.cancelled) {
+      if (!result.canceled) {
         setImageUris((prevUris) => [...prevUris, result.uri]);
       }
     } catch (error) {
@@ -50,49 +48,48 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     }
   };
 
-  // Function to open the gallery
   const openGallery = async () => {
-    await requestPermissions(); // Request permissions before opening the gallery
+    const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      const { status: newStatus } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (newStatus !== "granted") {
+        alert("Gallery access is required to select images.");
+        return;
+      }
+    }
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaType: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
         quality: 1,
-        allowsMultipleSelection: true, // Allow multiple image selection
+        allowsMultipleSelection: true,
       });
 
-      if (!result.cancelled) {
-        setImageUris((prevUris) => [...prevUris, ...result.selected]);
+      if (!result.canceled && result.assets) {
+        const urisArray = result.assets.map((asset) => asset.uri);
+        setImageUris((prevUris) => [...prevUris, ...urisArray]);
       }
     } catch (error) {
-      console.log("Error opening gallery:", error);
+      console.error("Gallery Error:", error);
       alert("There was an issue opening the gallery.");
     }
   };
 
-  // Function to prompt user for selecting photo source
   const handlePhotoSelection = () => {
     Alert.alert(
       "Select Photo Option",
       "Choose to either take a photo or select from the gallery.",
       [
-        {
-          text: "Take Photo",
-          onPress: openCamera,
-        },
-        {
-          text: "Choose from Gallery",
-          onPress: openGallery,
-        },
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
+        { text: "Take Photo", onPress: openCamera },
+        { text: "Choose from Gallery", onPress: openGallery },
+        { text: "Cancel", style: "cancel" },
       ]
     );
   };
 
-  // Handle adding a new meal
   const handleAddMeal = () => {
     if (!mealName.trim()) {
       alert("Meal name cannot be empty");
@@ -102,8 +99,14 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     addMeal(mealName, description, imageUris);
     setMealName("");
     setDescription("");
-    setImageUris([]);
-    setModalVisible(false); // Close the modal after adding the meal
+    setImageUris();
+    setModalVisible(false);
+  };
+
+  const handleDeleteImage = (indexToDelete) => {
+    setImageUris((prevUris) =>
+      prevUris.filter((_, index) => index !== indexToDelete)
+    );
   };
 
   return (
@@ -116,26 +119,20 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Add a New Meal</Text>
 
-          {/* Close Button (X Icon) positioned top-right */}
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setModalVisible(false)} // Close modal on click
-          >
-            <Ionicons name="close" size={30} color="#D3D3D3" />{" "}
-            {/* Set the color here */}
+            onPress={() => setModalVisible(false)}>
+            <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
 
-          {/* Photo Frame */}
           <TouchableOpacity
             style={styles.photoFrame}
-            onPress={handlePhotoSelection} // Trigger photo selection
-          >
+            onPress={handlePhotoSelection}>
             <Text style={styles.photoFrameText}>
               {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
             </Text>
           </TouchableOpacity>
 
-          {/* Meal Name */}
           <TextInput
             style={styles.input}
             placeholder="Enter meal name"
@@ -143,7 +140,6 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
             onChangeText={setMealName}
           />
 
-          {/* Meal Description */}
           <TextInput
             style={[styles.input, styles.descriptionInput]}
             placeholder="Enter meal description"
@@ -153,14 +149,22 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
             numberOfLines={4}
           />
 
-          {/* Image Preview */}
-          <View style={styles.imagePreviewContainer}>
+          <ScrollView
+            horizontal={true}
+            style={styles.imagePreviewContainer}
+            contentContainerStyle={{ justifyContent: "flex-start" }}>
             {imageUris.map((uri, index) => (
-              <Image key={index} source={{ uri }} style={styles.imagePreview} />
+              <View key={index} style={styles.imageWrapper}>
+                <Image source={{ uri }} style={styles.imagePreview} />
+                <TouchableOpacity
+                  onPress={() => handleDeleteImage(index)}
+                  style={styles.deleteButton}>
+                  <Text style={styles.deleteButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
             ))}
-          </View>
+          </ScrollView>
 
-          {/* Submit Button */}
           <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
             <Text style={styles.addButtonText}>Add Meal</Text>
           </TouchableOpacity>
@@ -175,7 +179,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Modal background with opacity
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     width: 300,
@@ -183,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 10,
     alignItems: "center",
-    position: "relative", // Relative positioning to place the close button in top-right
+    position: "relative",
   },
   modalTitle: {
     fontSize: 18,
@@ -199,7 +203,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   descriptionInput: {
-    height: 100, // Makes the description input taller
+    height: 100,
   },
   addButton: {
     backgroundColor: "#28a745",
@@ -213,11 +217,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   closeButton: {
-    color: "#D3D3D3",
     position: "absolute",
     top: 10,
     right: 10,
-    zIndex: 1, // Ensure the close button appears above other content
+    zIndex: 1,
+  },
+  closeButtonText: {
+    fontSize: 30,
+    color: "#D3D3D3",
   },
   photoFrame: {
     width: 255,
@@ -237,14 +244,31 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     flexDirection: "row",
-    flexWrap: "wrap",
     marginBottom: 15,
   },
+  imageWrapper: {
+    position: "relative",
+    marginRight: 8,
+  },
   imagePreview: {
-    width: 100,
-    height: 100,
-    marginBottom: 15,
+    width: 60,
+    height: 60,
     borderRadius: 8,
+  },
+  deleteButton: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  deleteButtonText: {
+    color: "white",
+    fontSize: 12,
   },
 });
 
