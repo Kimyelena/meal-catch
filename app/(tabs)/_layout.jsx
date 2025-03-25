@@ -71,6 +71,15 @@ const TabNavigator = () => {
             ),
           }}
         />
+        <Tabs.Screen
+          name="meals"
+          options={{
+            title: "Meals",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialIcons name="local-dining" size={size} color={color} />
+            ),
+          }}
+        />
       </Tabs>
 
       <AddMealModal
