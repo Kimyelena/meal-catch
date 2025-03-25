@@ -1,61 +1,37 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { TouchableOpacity, Text, StyleSheet } from "react-native";
-
-const HeaderLogout = () => {
-  const { user, logout } = useAuth();
-
-  return user ? (
-    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-      <MaterialIcons name="logout" size={24} color="#fff" />
-    </TouchableOpacity>
-  ) : null;
-};
+import { TouchableOpacity } from "react-native";
 
 const RootLayout = () => {
+  const router = useRouter();
+
   return (
     <AuthProvider>
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: "#ff8c00",
-          },
+          headerStyle: { backgroundColor: "#ff8c00" },
           headerTintColor: "#fff",
-          headerTitleStyle: {
-            fontSize: 20,
-            fontWeight: "bold",
-          },
-          headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{ padding: 10 }}>
-              <MaterialIcons name="arrow-back" size={24} color="#fff" />
-            </TouchableOpacity>
-          ),
-          headerRight: () => <HeaderLogout />,
-          contentStyle: {
-            paddingHorizontal: 10,
-            paddingTop: 10,
-            backgroundColor: "#fff",
-          },
+          headerTitleStyle: { fontSize: 20, fontWeight: "bold" },
+          headerRight: () => <AccountIcon />,
         }}>
-        <Stack.Screen name="index" options={{ title: "Home" }} />
-        <Stack.Screen name="meals" options={{ headerTitle: "Meals" }} />
-        <Stack.Screen name="auth" options={{ headerTitle: "Login" }} />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="account" options={{ title: "Account" }} />
       </Stack>
     </AuthProvider>
   );
 };
 
-const styles = StyleSheet.create({
-  logoutButton: {
-    marginRight: 15,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    backgroundColor: "#ff3b30",
-    borderRadius: 8,
-  },
-});
+const AccountIcon = () => {
+  const router = useRouter();
+
+  return (
+    <TouchableOpacity
+      onPress={() => router.push("/account")}
+      style={{ marginRight: 15 }}>
+      <MaterialIcons name="account-circle" size={28} color="#fff" />
+    </TouchableOpacity>
+  );
+};
 
 export default RootLayout;

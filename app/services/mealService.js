@@ -25,15 +25,19 @@ const mealService = {
     }
   },
 
-  async addMeal(user_id, text) {
+  async addMeal(user_id, text, imageUris = []) {
     if (!text) {
       return { error: "Meal text cannot be empty" };
     }
+
+    // Ensure the image URIs are provided or empty
+    const images = imageUris.length > 0 ? imageUris : [];
 
     const data = {
       text: text,
       createdAt: new Date().toISOString(),
       user_id: user_id,
+      imageUris: imageUris, // Store the image URLs in the database
     };
 
     const response = await databaseService.createDocument(

@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
 } from "react-native";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 const MealItem = ({ meal, onDelete, onEdit }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -19,7 +20,6 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
       return;
     }
 
-    console.log("✏️ Ukládám změny:", editedText);
     onEdit(meal.$id, editedText);
     setIsEditing(false);
   };
@@ -47,25 +47,23 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
               handleSave();
               inputRef.current?.blur();
             }}>
-            <Text style={styles.saveButton}>Save</Text>
+            <Icon name="check" size={24} color="green" style={styles.icon} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             onPress={() => {
-              console.log("✏️ Editace jídla:", meal.$id);
               setIsEditing(true);
               setTimeout(() => inputRef.current?.focus(), 100);
             }}>
-            <Text style={styles.editButton}>Edit</Text>
+            <Icon name="edit" size={24} color="gray" style={styles.icon} />
           </TouchableOpacity>
         )}
 
         <TouchableOpacity
           onPress={() => {
-            console.log("🗑 Mažu jídlo:", meal.$id);
             onDelete(meal.$id);
           }}>
-          <Text style={styles.deleteButton}>Delete</Text>
+          <Icon name="delete" size={24} color="gray" style={styles.icon} />
         </TouchableOpacity>
       </View>
     </View>
@@ -84,6 +82,7 @@ const styles = StyleSheet.create({
   },
   mealText: {
     fontSize: 18,
+    flex: 1,
   },
   input: {
     fontSize: 18,
@@ -95,19 +94,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
   },
-  editButton: {
-    fontSize: 16,
-    color: "blue",
-    marginRight: 10,
-  },
-  saveButton: {
-    fontSize: 16,
-    color: "green",
-    marginRight: 10,
-  },
-  deleteButton: {
-    fontSize: 16,
-    color: "red",
+  icon: {
+    marginLeft: 10,
   },
 });
 

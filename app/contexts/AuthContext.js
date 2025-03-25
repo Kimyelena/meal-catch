@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       return response;
     }
 
-    return login(email, password); // Auto-login after register
+    return login(email, password);
   };
 
   const logout = async () => {

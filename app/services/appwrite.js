@@ -9,14 +9,18 @@ const config = {
   },
 };
 
-
 const client = new Client()
   .setEndpoint(config.endpoint)
   .setProject(config.projectId);
 
 const database = new Databases(client);
-
 const account = new Account(client);
 
+export default {
+  client,
+  database,
+  account,
+  config,
+};
 
-export { database, config, client, account };
+export { client, database, account, config };
