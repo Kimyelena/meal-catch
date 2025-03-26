@@ -11,32 +11,43 @@ import {
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
-import Tags from "react-native-tags";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const Tag = ({ tag, selected, onPress }) => (
-  <TouchableOpacity
-    style={[styles.tag, selected && styles.selectedTag]}
-    onPress={onPress}>
-    <Text style={styles.tagText}>{tag}</Text>
-  </TouchableOpacity>
-);
+const MIN_INPUT_HEIGHT = 70;
+const MAX_INPUT_HEIGHT = 150;
 
 const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUris, setImageUris] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [descriptionInputHeight, setDescriptionInputHeight] =
+    useState(MIN_INPUT_HEIGHT);
+
+  const categoryDisplayOrder = [
+    "Handmade",
+    "LongLasting",
+    "Sweets",
+    "Nutrition",
+    "Other",
+  ];
+
+  const defaultCategory = "Other";
+
+  const categoryIcons = {
+    Handmade: "food-bank",
+    LongLasting: "local-grocery-store",
+    Sweets: "cake",
+    Nutrition: "vegetables",
+    Other: "category",
+  };
 
   const tags = [
     "Vegetarian",
     "Vegan",
     "Gluten-free",
-    "Fast food",
-    "Breakfast",
-    "Lunch",
-    "Dinner",
     "Homemade",
-    "Restaurant",
     "Fresh",
     "Leftover",
     "Remaining",
@@ -56,7 +67,6 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       await ImagePicker.requestMediaLibraryPermissionsAsync();
     const { status: cameraStatus } =
       await ImagePicker.requestCameraPermissionsAsync();
-
     if (mediaLibraryStatus !== "granted" || cameraStatus !== "granted") {
       alert(
         "Sorry, we need camera and photo library permissions to make this work!"
@@ -66,15 +76,13 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
 
   const openCamera = async () => {
     await requestPermissions();
-
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaType.Images,
         quality: 1,
       });
-
       if (!result.canceled) {
-        setImageUris((prevUris) => [...prevUris, result.uri]);
+        setImageUris((prevUris) => [...prevUris, result.assets[0].uri]);
       }
     } catch (error) {
       console.log("Error opening camera:", error);
@@ -84,14 +92,12 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
 
   const openGallery = async () => {
     await requestPermissions();
-
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
         allowsMultipleSelection: true,
       });
-
       if (!result.canceled && result.assets) {
         const urisArray = result.assets.map((asset) => asset.uri);
         setImageUris((prevUris) => [...prevUris, ...urisArray]);
@@ -114,6 +120,10 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     );
   };
 
+  const handleSelectCategory = (category) => {
+    setSelectedCategory(category);
+  };
+
   const handleAddMeal = () => {
     if (!mealName || !mealName.trim()) {
       alert("Meal name cannot be empty");
@@ -125,6 +135,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     setDescription("");
     setImageUris([]);
     setSelectedTags([]);
+    setSelectedCategory(null);
     setModalVisible(false);
   };
 
@@ -148,6 +159,8 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       setDescription("");
       setImageUris([]);
       setSelectedTags([]);
+      setSelectedCategory(null);
+      setDescriptionInputHeight(MIN_INPUT_HEIGHT);
     }
   }, [modalVisible]);
 
@@ -159,7 +172,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Add a New Meal</Text>
+          <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
@@ -173,7 +186,6 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
                 {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
               </Text>
             </TouchableOpacity>
-
             <ScrollView
               horizontal={true}
               showsHorizontalScrollIndicator={false}>
@@ -183,7 +195,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
                   <TouchableOpacity
                     onPress={() => handleDeleteImage(index)}
                     style={styles.deleteButton}>
-                    <Text style={styles.deleteButtonText}>X</Text>
+                    <Text>x</Text>
                   </TouchableOpacity>
                 </View>
               ))}
@@ -191,24 +203,87 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder="Enter meal name"
+            placeholder="Jake jidlo nabizete?"
             value={mealName}
             onChangeText={setMealName}
           />
+
+          {/* === MODIFIED DESCRIPTION INPUT === */}
           <TextInput
-            style={[styles.input, styles.descriptionInput]}
-            placeholder="Enter meal description"
+            style={[
+              styles.input, // Apply base input styles
+              styles.descriptionInput, // Apply specific description styles (like minHeight)
+              // Apply the dynamic height from state
+              { height: descriptionInputHeight },
+              // Note: Math.max(MIN_INPUT_HEIGHT, descriptionInputHeight) is technically safer
+              // if state could somehow be set below minHeight, but usually not needed.
+            ]}
+            placeholder="Popis prosim, co to je :D" // Your placeholder
             value={description}
             onChangeText={setDescription}
+            multiline={true} // <= IMPORTANT: Allow multiple lines
+            onContentSizeChange={(event) => {
+              // <= IMPORTANT: Update height on content change
+              const newHeight = event.nativeEvent.contentSize.height;
+              // Update state, but limit by MAX_INPUT_HEIGHT and ensure it's not less than MIN_INPUT_HEIGHT
+              setDescriptionInputHeight(
+                Math.max(
+                  MIN_INPUT_HEIGHT,
+                  Math.min(newHeight, MAX_INPUT_HEIGHT)
+                )
+              );
+              // If you want unlimited growth within the ScrollView, remove Math.min:
+              // setDescriptionInputHeight(Math.max(MIN_INPUT_HEIGHT, newHeight));
+            }}
+            // Optional: Make Return key add a new line instead of submitting form
+            // blurOnSubmit={false}
           />
+          {/* ================================= */}
+
+          {/* --- Category Selection UI --- */}
+          {/* <Text style={styles.sectionTitle}>Select Category:</Text> */}
+          <View style={styles.categoriesContainer}>
+            {/* Map over the LOCALLY defined categoryDisplayOrder */}
+            {categoryDisplayOrder.map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  selectedCategory === category &&
+                    styles.selectedCategoryButton,
+                ]}
+                onPress={() => handleSelectCategory(category)}>
+                <MaterialIcons
+                  name={
+                    categoryIcons[category] || categoryIcons[defaultCategory]
+                  }
+                  size={20}
+                  color={selectedCategory === category ? "#fff" : "#555"}
+                  style={styles.categoryIcon}
+                />
+                <Text
+                  style={[
+                    styles.categoryText,
+                    selectedCategory === category &&
+                      styles.selectedCategoryText,
+                  ]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          {/* ----------------------------- */}
           <View style={styles.tagsContainer}>
             {tags.map((tag) => (
-              <Tag
+              <TouchableOpacity
                 key={tag}
-                tag={tag}
-                selected={selectedTags.includes(tag)}
-                onPress={() => handleToggleTag(tag)}
-              />
+                style={[
+                  styles.tag,
+                  selectedTags.includes(tag) && styles.selectedTag,
+                ]}
+                onPress={() => handleToggleTag(tag)}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </TouchableOpacity>
             ))}
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
@@ -227,31 +302,32 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
+  // modalContent: {
+  //   width: "90%",
+  //   maxHeight: "90%", // Crucial for ScrollView to work within the modal view
+  //   backgroundColor: "#fff",
+  //   borderRadius: 10,
+  //   padding: 20,
+  //   alignItems: "center",
+  //   marginVertical: 20, // Ensure space for scrolling
+  // },
   modalContent: {
-    width: "90%",
-    height: "80%",
+    width: "95%",
+    height: "85%",
     backgroundColor: "#fff",
     borderRadius: 10,
     padding: 20,
     alignItems: "center",
     position: "relative",
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 15,
-  },
-  input: {
-    width: "100%",
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    marginBottom: 15,
-  },
-  descriptionInput: {
-    height: 100,
-  },
+  // input: {
+  //   width: "100%",
+  //   padding: 10,
+  //   borderWidth: 1,
+  //   borderColor: "#ccc",
+  //   borderRadius: 8,
+  //   marginBottom: 1,
+  // },
   addButton: {
     backgroundColor: "#28a745",
     paddingVertical: 10,
@@ -270,7 +346,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    zIndex: 1,
+    // zIndex: 3,
   },
   closeButtonText: {
     fontSize: 30,
@@ -279,7 +355,7 @@ const styles = StyleSheet.create({
   photoContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 15,
+    marginBottom: 10,
   },
   photoFrame: {
     width: 100,
@@ -290,7 +366,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
     backgroundColor: "#f2f2f2",
-    marginRight: 8,
+    marginRight: 5,
   },
   photoFrameText: {
     color: "#aaa",
@@ -299,11 +375,11 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: "relative",
-    marginRight: 8,
+    marginRight: 5,
   },
   imagePreview: {
-    width: 60,
-    height: 60,
+    width: 95,
+    height: 95,
     borderRadius: 8,
   },
   deleteButton: {
@@ -311,15 +387,74 @@ const styles = StyleSheet.create({
     top: -5,
     right: -5,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderRadius: 10,
+    borderRadius: 15,
     width: 20,
     height: 20,
     justifyContent: "center",
     alignItems: "center",
   },
-  deleteButtonText: {
-    color: "white",
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  input: {
+    width: "100%",
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  descriptionInput: {
+    minHeight: MIN_INPUT_HEIGHT,
+    textAlignVertical: "top",
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 15,
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    marginLeft: "5%",
+  },
+  categoriesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-evenly",
+    width: "100%",
+  },
+  categoryButton: {
+    flexDirection: "column",
+    alignItems: "center",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 5,
+    margin: 2,
+    borderWidth: 2,
+    borderColor: "#e0e0e0",
+    minWidth: 80,
+  },
+  selectedCategoryButton: {
+    backgroundColor: "#007bff",
+    borderColor: "#0056b3",
+  },
+  categoryIcon: {
+    marginBottom: 2, 
+  },
+  categoryText: {
+    color: "#333",
     fontSize: 12,
+    textAlign: "center",
+  },
+  selectedCategoryText: {
+    color: "#fff",
+    fontWeight: "bold",
   },
   tagsContainer: {
     flexDirection: "row",

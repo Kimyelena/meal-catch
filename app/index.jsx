@@ -1,33 +1,19 @@
-import { useEffect } from "react";
-import {
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import PostItImage from "../assets/images/meal-catch-logo.png";
+// app/index.js
+
+import React from "react"; // Import React
+import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
+import PostItImage from "../assets/images/meal-catch-logo.png"; // Adjust path if needed
 import { useRouter } from "expo-router";
-import { useAuth } from "../app/contexts/AuthContext";
+// Removed useAuth and useEffect - redirection is handled by the layout
 
 const HomeScreen = () => {
-  const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!loading && user) {
-      router.replace("/meals");
-    }
-  }, [user, loading]);
-
-  if (loading) {
-    return (
-      <View style={styles.centeredContainter}>
-        <ActivityIndicator size="large" color="#007bff" />
-      </View>
-    );
-  }
+  // This component now just renders the landing page.
+  // It will only be shown if:
+  // 1. Auth loading is complete (handled in _layout.js)
+  // 2. User is null (handled in _layout.js redirect logic)
+  console.log("Rendering HomeScreen (Landing Page UI)");
 
   return (
     <View style={styles.container}>
@@ -39,13 +25,15 @@ const HomeScreen = () => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/meals")}>
-        <Text style={styles.buttonText}>Get Started</Text>
+        // Decide where this button should go. '/account' often holds login/signup.
+        onPress={() => router.push("/account")}>
+        <Text style={styles.buttonText}>Get Started / Login</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+// --- Styles --- (Copied from your previous version)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -84,11 +72,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
   },
-  centeredContainter: {
-    alignItems: "center",
-    justifyContent: "center",
-    textAlign: "center",
-  },
+  // centeredContainer style is not needed here anymore
 });
 
 export default HomeScreen;
