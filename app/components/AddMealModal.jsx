@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,45 @@ import {
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import Tags from "react-native-tags";
+
+const Tag = ({ tag, selected, onPress }) => (
+  <TouchableOpacity
+    style={[styles.tag, selected && styles.selectedTag]}
+    onPress={onPress}>
+    <Text style={styles.tagText}>{tag}</Text>
+  </TouchableOpacity>
+);
 
 const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUris, setImageUris] = useState([]); // Initialize as an empty array
+  const [imageUris, setImageUris] = useState([]);
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  const tags = [
+    "Vegetarian",
+    "Vegan",
+    "Gluten-free",
+    "Fast food",
+    "Breakfast",
+    "Lunch",
+    "Dinner",
+    "Homemade",
+    "Restaurant",
+    "Fresh",
+    "Leftover",
+    "Remaining",
+    "No additives",
+    "Low-calorie",
+    "Local",
+    "Seasonal",
+    "Healthy",
+    "Sugar",
+    "Sugar-free",
+    "Sweet",
+    "Long-lasting",
+  ];
 
   const requestPermissions = async () => {
     const { status: mediaLibraryStatus } =
@@ -49,21 +83,11 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   };
 
   const openGallery = async () => {
-    const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-
-    if (status !== "granted") {
-      const { status: newStatus } =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (newStatus !== "granted") {
-        alert("Gallery access is required to select images.");
-        return;
-      }
-    }
+    await requestPermissions();
 
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
         allowsMultipleSelection: true,
       });
@@ -91,16 +115,25 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   };
 
   const handleAddMeal = () => {
-    if (!mealName.trim()) {
+    if (!mealName || !mealName.trim()) {
       alert("Meal name cannot be empty");
       return;
     }
 
-    addMeal(mealName, description, imageUris);
+    addMeal(mealName, description, imageUris, selectedTags);
     setMealName("");
     setDescription("");
-    setImageUris();
+    setImageUris([]);
+    setSelectedTags([]);
     setModalVisible(false);
+  };
+
+  const handleToggleTag = (tag) => {
+    setSelectedTags((prevTags) =>
+      prevTags.includes(tag)
+        ? prevTags.filter((t) => t !== tag)
+        : [...prevTags, tag]
+    );
   };
 
   const handleDeleteImage = (indexToDelete) => {
@@ -108,6 +141,15 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       prevUris.filter((_, index) => index !== indexToDelete)
     );
   };
+
+  useEffect(() => {
+    if (!modalVisible) {
+      setMealName("");
+      setDescription("");
+      setImageUris([]);
+      setSelectedTags([]);
+    }
+  }, [modalVisible]);
 
   return (
     <Modal
@@ -118,55 +160,59 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Add a New Meal</Text>
-
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
+          <View style={styles.photoContainer}>
+            <TouchableOpacity
+              style={styles.photoFrame}
+              onPress={handlePhotoSelection}>
+              <Text style={styles.photoFrameText}>
+                {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.photoFrame}
-            onPress={handlePhotoSelection}>
-            <Text style={styles.photoFrameText}>
-              {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
-            </Text>
-          </TouchableOpacity>
-
+            <ScrollView
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}>
+              {imageUris.map((uri, index) => (
+                <View key={index} style={styles.imageWrapper}>
+                  <Image source={{ uri }} style={styles.imagePreview} />
+                  <TouchableOpacity
+                    onPress={() => handleDeleteImage(index)}
+                    style={styles.deleteButton}>
+                    <Text style={styles.deleteButtonText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="Enter meal name"
             value={mealName}
             onChangeText={setMealName}
           />
-
           <TextInput
             style={[styles.input, styles.descriptionInput]}
             placeholder="Enter meal description"
             value={description}
             onChangeText={setDescription}
-            multiline
-            numberOfLines={4}
           />
-
-          <ScrollView
-            horizontal={true}
-            style={styles.imagePreviewContainer}
-            contentContainerStyle={{ justifyContent: "flex-start" }}>
-            {imageUris.map((uri, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image source={{ uri }} style={styles.imagePreview} />
-                <TouchableOpacity
-                  onPress={() => handleDeleteImage(index)}
-                  style={styles.deleteButton}>
-                  <Text style={styles.deleteButtonText}>X</Text>
-                </TouchableOpacity>
-              </View>
+          <View style={styles.tagsContainer}>
+            {tags.map((tag) => (
+              <Tag
+                key={tag}
+                tag={tag}
+                selected={selectedTags.includes(tag)}
+                onPress={() => handleToggleTag(tag)}
+              />
             ))}
-          </ScrollView>
-
+          </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
-            <Text style={styles.addButtonText}>Add Meal</Text>
+            <Text style={styles.addButtonText}>Zverejnit</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -182,10 +228,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: 300,
-    padding: 20,
+    width: "90%",
+    height: "80%",
     backgroundColor: "#fff",
     borderRadius: 10,
+    padding: 20,
     alignItems: "center",
     position: "relative",
   },
@@ -210,7 +257,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginBottom: 10,
+    position: "absolute",
+    bottom: 10,
+    left: "50%",
+    transform: [{ translateX: -50 }],
   },
   addButtonText: {
     color: "#fff",
@@ -226,25 +276,26 @@ const styles = StyleSheet.create({
     fontSize: 30,
     color: "#D3D3D3",
   },
-  photoFrame: {
-    width: 255,
-    height: 300,
+  photoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 15,
+  },
+  photoFrame: {
+    width: 100,
+    height: 100,
     borderWidth: 1,
     borderColor: "#ccc",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
     backgroundColor: "#f2f2f2",
+    marginRight: 8,
   },
   photoFrameText: {
     color: "#aaa",
     fontSize: 14,
     textAlign: "center",
-  },
-  imagePreviewContainer: {
-    flexDirection: "row",
-    marginBottom: 15,
   },
   imageWrapper: {
     position: "relative",
@@ -269,6 +320,28 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "white",
     fontSize: 12,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginTop: 5,
+    width: "100%",
+    justifyContent: "space-evenly",
+  },
+  tag: {
+    backgroundColor: "#e0e0e0",
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    margin: 3,
+  },
+  selectedTag: {
+    backgroundColor: "#007bff",
+    color: "#fff",
+  },
+  tagText: {
+    color: "#333",
+    fontSize: 14,
   },
 });
 
