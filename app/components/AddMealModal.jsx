@@ -209,43 +209,27 @@ const AddMealModal = ({
             value={mealName}
             onChangeText={setMealName}
           />
-
-          {/* === MODIFIED DESCRIPTION INPUT === */}
           <TextInput
             style={[
-              styles.input, // Apply base input styles
-              styles.descriptionInput, // Apply specific description styles (like minHeight)
-              // Apply the dynamic height from state
+              styles.input,
+              styles.descriptionInput,
               { height: descriptionInputHeight },
-              // Note: Math.max(MIN_INPUT_HEIGHT, descriptionInputHeight) is technically safer
-              // if state could somehow be set below minHeight, but usually not needed.
             ]}
-            placeholder="Popis prosim, co to je :D" // Your placeholder
+            placeholder="Popis prosim, co to je :D"
             value={description}
             onChangeText={setDescription}
-            multiline={true} // <= IMPORTANT: Allow multiple lines
+            multiline={true}
             onContentSizeChange={(event) => {
-              // <= IMPORTANT: Update height on content change
               const newHeight = event.nativeEvent.contentSize.height;
-              // Update state, but limit by MAX_INPUT_HEIGHT and ensure it's not less than MIN_INPUT_HEIGHT
               setDescriptionInputHeight(
                 Math.max(
                   MIN_INPUT_HEIGHT,
                   Math.min(newHeight, MAX_INPUT_HEIGHT)
                 )
               );
-              // If you want unlimited growth within the ScrollView, remove Math.min:
-              // setDescriptionInputHeight(Math.max(MIN_INPUT_HEIGHT, newHeight));
             }}
-            // Optional: Make Return key add a new line instead of submitting form
-            // blurOnSubmit={false}
           />
-          {/* ================================= */}
-
-          {/* --- Category Selection UI --- */}
-          {/* <Text style={styles.sectionTitle}>Select Category:</Text> */}
           <View style={styles.categoriesContainer}>
-            {/* Map over the LOCALLY defined categoryDisplayOrder */}
             {categoryDisplayOrder.map((category) => (
               <TouchableOpacity
                 key={category}

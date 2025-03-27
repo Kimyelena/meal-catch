@@ -1,8 +1,7 @@
 // app/_layout.js
 
-import React, { useState, useEffect } from "react"; // Import React and hooks
+import React, { useState, useEffect, useRef } from "react"; // Import React and hooks
 import { Stack, useRouter, usePathname } from "expo-router";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import {
   TouchableOpacity,
   StyleSheet,
@@ -14,6 +13,11 @@ import {
 
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
 import AddMealModal from "../app/components/AddMealModal";
+import ChatButton from "./components/IconButtons/ChatButton";
+import AccountButton from "./components/IconButtons/AccountButton";
+import NotificationButton from "./components/IconButtons/NotificationButton";
+import BackButton from "./components/IconButtons/BackButton";
+
 import mealService from "../app/services/mealService";
 
 const AppContent = () => {
@@ -41,36 +45,6 @@ const AppContent = () => {
       }
     }
   }, [user, loading, pathname, router]);
-
-  const AccountIcon = () => (
-    <TouchableOpacity
-      onPress={() => router.push("/account")}
-      style={{ marginRight: 15 }}>
-      <MaterialIcons name="account-circle" size={28} color="#fff" />
-    </TouchableOpacity>
-  );
-  const NotificationIcon = () => (
-    <TouchableOpacity
-      onPress={() => router.push("/notifications")}
-      style={{ marginRight: 15 }}>
-      <MaterialIcons name="notifications" size={28} color="#fff" />
-    </TouchableOpacity>
-  );
-  const ChatButton = () => (
-    <TouchableOpacity
-      onPress={() => router.push("/chat")}
-      style={styles.chatButton}>
-      <MaterialIcons name="chat" size={32} color="#007bff" />
-    </TouchableOpacity>
-  );
-
-  const BackButton = () => (
-    <TouchableOpacity
-      onPress={() => router.replace("/meals")}
-      style={styles.backButton}>
-      <MaterialIcons name="arrow-back" size={28} color="#fff" />
-    </TouchableOpacity>
-  );
 
   const handleModalAddMeal = async (
     name,
@@ -112,10 +86,6 @@ const AppContent = () => {
     );
   }
 
-  console.log(
-    "AppContent Render: Rendering Stack and UI. User:",
-    user ? user.$id : "None"
-  );
   return (
     <View style={{ flex: 1 }}>
       <Stack
@@ -125,17 +95,12 @@ const AppContent = () => {
           headerTitleStyle: { fontSize: 20, fontWeight: "bold" },
           headerRight: () => (
             <View style={{ flexDirection: "row" }}>
-              <NotificationIcon />
-              <AccountIcon />
+              <NotificationButton />
+              <AccountButton />
             </View>
           ),
           headerLeft: () => (pathname !== "/meals" ? <BackButton /> : null),
         }}>
-        {/* Screens are usually defined by files in `app` directory.
-            You might not need these Stack.Screen declarations if you have
-            app/account.js, app/chat.js, app/notifications.js.
-            The Stack component automatically finds and configures them.
-            Only declare here if needed for specific options overriding file conventions. */}
         <Stack.Screen name="account" options={{ title: "Account" }} />
         <Stack.Screen name="chat" options={{ title: "Chat" }} />
         <Stack.Screen
@@ -144,7 +109,6 @@ const AppContent = () => {
         />
       </Stack>
 
-      {/* Floating Buttons and Modal - Only show if logged in */}
       {user && (
         <>
           <View style={styles.buttonContainer}>
@@ -168,7 +132,6 @@ const AppContent = () => {
 };
 
 const RootLayout = () => {
-  console.log("RootLayout Render: Setting up AuthProvider.");
   return (
     <AuthProvider>
       <AppContent />

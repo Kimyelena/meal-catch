@@ -111,84 +111,26 @@ const mealService = {
     }
   },
 
-  // --- REFACTORED updateMeal FUNCTION ---
-  /**
-   * Updates specific fields of a meal document.
-   * @param {string} id - The ID of the meal document to update.
-   * @param {object} updatedData - An object containing the fields to update.
-   * Keys MUST match Appwrite attribute keys.
-   * Example: { text: "New Name", description: "New Desc", imageUris: ["uri1", "uri3"] }
-   */
-  async updateMeal(id, updatedData) {
-    console.log("updateMeal input:", { id, updatedData });
-
-    if (!id) {
-      console.error("Error: Meal ID is missing for update");
-      return { data: null, error: "Meal ID is missing" };
-    }
-
-    if (
-      !updatedData ||
-      typeof updatedData !== "object" ||
-      Object.keys(updatedData).length === 0
-    ) {
-      console.error("Error: Invalid or empty update data provided");
-      return { data: null, error: "Invalid or empty update data provided" };
-    }
-
-    // --- Important: Construct the payload for Appwrite ---
-    // Ensure the keys here EXACTLY match your Appwrite Collection Attribute keys.
-    const dataForAppwrite = {};
-
-    if (updatedData.text !== undefined) {
-      // Use 'text' key matching Appwrite attribute
-      dataForAppwrite.text = updatedData.text;
-    }
-    if (updatedData.description !== undefined) {
-      // Use 'description' or 'descriptions' key matching Appwrite attribute
-      dataForAppwrite.description = updatedData.description;
-      // OR dataForAppwrite.descriptions = updatedData.description;
-    }
-    if (updatedData.imageUris !== undefined) {
-      // Use 'imageUris' key matching Appwrite attribute
-      // This will REPLACE the existing array in Appwrite with the new one.
-      dataForAppwrite.imageUris = updatedData.imageUris;
-    }
-    // Add other fields if they need updating (e.g., tags)
-    // if (updatedData.tags !== undefined) {
-    //     dataForAppwrite.tags = updatedData.tags;
-    // }
-
-    // Add a timestamp for the update if you have an 'updatedAt' field
-    // dataForAppwrite.updatedAt = new Date().toISOString();
-
-    // Check if there's anything to update after filtering
-    if (Object.keys(dataForAppwrite).length === 0) {
-      console.warn(
-        "updateMeal: No valid fields provided for update after filtering."
-      );
-      // You might return the original data or a specific message
-      return { data: null, error: "No valid fields provided for update." };
-    }
-
-    console.log("Data being sent to Appwrite for update:", dataForAppwrite);
-
+  async updateMeal(id, name, description, imageUris) {
     try {
-      // Pass the constructed data object containing only the fields to update
+      const updatedData = {
+        name: name,
+        description: description,
+        imageUris: imageUris,
+      };
+
       const response = await databaseService.updateDocument(
         dbId,
         colId,
         id,
-        dataForAppwrite
+        updatedData
       );
-      console.log("updateMeal response:", response);
       return { data: response, error: null };
     } catch (error) {
       console.error("Error updating meal:", error);
       return { data: null, error: error.message };
     }
   },
-  // --- END OF REFACTORED updateMeal ---
 
   async deleteMeal(id) {
     console.log("deleteMeal input:", { id });

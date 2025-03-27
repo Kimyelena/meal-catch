@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
-import MealItemView from "../components/MealItemView";
-import { fetchMeals } from "../utils/mealUtils"; // Import the utility function
+import { fetchMeals } from "../utils/mealUtils";
 import AddMealModal from "../components/AddMealModal";
 import mealService from "../services/mealService";
 
@@ -32,10 +32,18 @@ const MealListScreen = () => {
 
   useEffect(() => {
     if (user) {
-      fetchMeals(null, setMeals, setLoading, setError);
-      console.log("MealListScreen - meals state:", meals); // LOG
+      setLoading(true);
+      fetchMeals(user?.$id, setMeals, setLoading, setError);
     }
   }, [user]);
+
+  // useEffect to extract categories from meals
+  useEffect(() => {
+    if (meals && meals.length > 0) {
+      const uniqueCategories = [...new Set(meals.map((meal) => meal.category))];
+      setCategories(uniqueCategories);
+    }
+  }, [meals]);
 
   return (
     <View style={styles.container}>
@@ -53,7 +61,15 @@ const MealListScreen = () => {
                   {meals
                     .filter((meal) => meal.category === category)
                     .map((meal) => (
-                      <MealItemView key={meal.$id} meal={meal} />
+                      <TouchableOpacity
+                        key={meal.$id}
+                        onPress={() => router.push(`/meal/${meal.$id}`)}
+                        style={styles.mealCard}>
+                        <Image
+                          source={{ uri: meal.imageUris[0] }}
+                          style={styles.mealImage}
+                        />
+                      </TouchableOpacity>
                     ))}
                 </ScrollView>
               </View>
@@ -62,7 +78,7 @@ const MealListScreen = () => {
           <AddMealModal
             modalVisible={modalVisible}
             setModalVisible={setModalVisible}
-            addMeal={mealService.createMeal}
+            addMeal={mealService.addMeal}
           />
         </>
       )}
@@ -86,11 +102,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryTitle: {
-    fontSize: 20,
+    fontSize: 10,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  // Add styles as needed
+  mealCard: {
+    width: 150,
+    height: 150,
+    marginRight: 10,
+    borderRadius: 8,
+    overflow: "hidden",
+  },
+  mealImage: {
+    width: "100%",
+    height: "100%",
+  },
+  // Add other styles as needed
 });
 
 export default MealListScreen;

@@ -1,13 +1,13 @@
-import React from "react";
-import { View, Text } from "react-native";
+import { Stack } from "expo-router";
 
-const NotificationsLayout = ({ children }) => {
+const NotificationLayout = () => {
   return (
-    <View>
-      <Text>Notifications Layout</Text>
-      {children}
-    </View>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
   );
 };
 
-export default NotificationsLayout;
+export default NotificationLayout;

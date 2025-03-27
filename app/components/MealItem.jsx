@@ -1,5 +1,4 @@
-// meal detailes, only for user who currently used app
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,10 +9,11 @@ import {
   ScrollView,
   TextInput,
   Alert,
+  Button,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
-import mealService from "../services/mealService"; // Import mealService
-import { fetchMeals } from "../utils/mealUtils"; // Import fetchMeals
+import mealService from "../services/mealService";
+import * as ImagePicker from "expo-image-picker";
 
 const MealItem = ({ meal, refreshMeals }) => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -21,15 +21,8 @@ const MealItem = ({ meal, refreshMeals }) => {
   const [editedName, setEditedName] = useState(meal.name);
   const [editedDescription, setEditedDescription] = useState(meal.description);
   const [editedImageUris, setEditedImageUris] = useState(meal.imageUris);
-  const inputRefName = useRef(null);
-  const inputRefDescription = useRef(null);
 
   const handleSave = async () => {
-    if (!editedName.trim()) {
-      Alert.alert("Error", "Meal name cannot be empty");
-      return;
-    }
-
     try {
       const response = await mealService.updateMeal(
         meal.$id,
@@ -37,6 +30,8 @@ const MealItem = ({ meal, refreshMeals }) => {
         editedDescription,
         editedImageUris
       );
+      console.log("Update response:", response);
+
       if (response.error) {
         Alert.alert("Error", response.error);
       } else {
@@ -45,6 +40,7 @@ const MealItem = ({ meal, refreshMeals }) => {
         refreshMeals();
       }
     } catch (error) {
+      console.error("Update error:", error);
       Alert.alert("Error", "Failed to update meal.");
     }
   };
@@ -57,10 +53,7 @@ const MealItem = ({ meal, refreshMeals }) => {
 
   const handleDeleteMeal = async () => {
     Alert.alert("Delete Meal", "Are you sure you want to delete this meal?", [
-      {
-        text: "Cancel",
-        style: "cancel",
-      },
+      { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
@@ -71,7 +64,7 @@ const MealItem = ({ meal, refreshMeals }) => {
               Alert.alert("Error", response.error);
             } else {
               setModalVisible(false);
-              refreshMeals(fetchMeals);
+              refreshMeals();
             }
           } catch (error) {
             Alert.alert("Error", "Failed to delete meal.");
@@ -79,6 +72,18 @@ const MealItem = ({ meal, refreshMeals }) => {
         },
       },
     ]);
+  };
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+    });
+
+    if (!result.canceled) {
+      const selectedUris = result.assets.map((asset) => asset.uri);
+      setEditedImageUris((prevUris) => [...prevUris, ...selectedUris]);
+    }
   };
 
   return (
@@ -104,7 +109,6 @@ const MealItem = ({ meal, refreshMeals }) => {
           <View style={styles.modalContent}>
             {isEditing ? (
               <TextInput
-                ref={inputRefName}
                 style={styles.input}
                 value={editedName}
                 onChangeText={setEditedName}
@@ -124,17 +128,16 @@ const MealItem = ({ meal, refreshMeals }) => {
                     {isEditing && (
                       <TouchableOpacity
                         onPress={() => handleDeleteImage(index)}
-                        style={styles.deleteButton}>
-                        <Text style={styles.deleteButtonText}>X</Text>
-                      </TouchableOpacity>
+                        style={styles.deleteButton}></TouchableOpacity>
                     )}
                   </View>
                 ))}
             </ScrollView>
 
+            {isEditing && <Button title="Add Image" onPress={pickImage} />}
+
             {isEditing ? (
               <TextInput
-                ref={inputRefDescription}
                 style={styles.descriptionInput}
                 value={editedDescription}
                 onChangeText={setEditedDescription}
@@ -159,8 +162,6 @@ const MealItem = ({ meal, refreshMeals }) => {
               )}
 
               <TouchableOpacity onPress={handleDeleteMeal}>
-                {" "}
-                {/* Call handleDeleteMeal */}
                 <Icon name="delete" size={24} color="gray" />
               </TouchableOpacity>
             </View>
@@ -180,11 +181,8 @@ const MealItem = ({ meal, refreshMeals }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    // New container to wrap the TouchableOpacity and Modal
-  },
+  container: {},
   mealItem: {
-    flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
     padding: 15,
@@ -192,14 +190,13 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   mealImage: {
-    width: 50,
-    height: 50,
+    width: 100,
+    height: 100,
     borderRadius: 5,
-    marginRight: 10,
+    marginBottom: 10,
   },
   mealName: {
     fontSize: 18,
-    flex: 1,
   },
   modalContainer: {
     flex: 1,
@@ -245,7 +242,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     borderBottomWidth: 1,
     borderBottomColor: "#aaa",
-    flex: 1,
+    marginBottom: 10,
   },
   imageWrapper: {
     position: "relative",
@@ -261,30 +258,6 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: "center",
     alignItems: "center",
-  },
-  deleteButtonText: {
-    color: "white",
-    fontSize: 12,
-  },
-  input: {
-    fontSize: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: "#aaa",
-    marginBottom: 10,
-  },
-  descriptionInput: {
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#aaa",
-    borderRadius: 5,
-    padding: 8,
-    marginBottom: 10,
-  },
-  hintText: {
-    fontSize: 12,
-    color: "gray",
-    marginTop: 10,
-    textAlign: "center",
   },
 });
 

@@ -90,10 +90,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   detailImage: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
-    borderRadius: 5,
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
   },
   modalDescription: {
     marginTop: 10,

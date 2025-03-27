@@ -4,7 +4,7 @@ import { Alert } from "react-native";
 export const fetchMeals = async (
   userId,
   setMeals,
-  setLoading,
+  setLoading = true,
   setError,
   isUserSpecific = false
 ) => {

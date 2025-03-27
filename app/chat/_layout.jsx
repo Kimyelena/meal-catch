@@ -1,12 +1,12 @@
-import React from "react";
-import { View, Text } from "react-native";
+import { Stack } from "expo-router";
 
-const ChatLayout = ({ children }) => {
+const ChatLayout = () => {
   return (
-    <View>
-      <Text>Chat Layout</Text>
-      {children}
-    </View>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+      }}
+    />
   );
 };
 

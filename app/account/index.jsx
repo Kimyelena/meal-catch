@@ -5,13 +5,12 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
   Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
-import MealItem from "../components/MealItem"; // Use the refactored MealItem
-import { fetchMeals } from "../utils/mealUtils"; // Import fetchMeals
+import MealItem from "../components/MealItem";
+import { fetchMeals } from "../utils/mealUtils";
 
 const AccountScreen = () => {
   const { logout, user } = useAuth();
@@ -21,10 +20,14 @@ const AccountScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  const refreshMeals = () => {
     if (user) {
       fetchMeals(user?.$id, setMyMeals, setLoading, setError, true);
     }
+  };
+
+  useEffect(() => {
+    refreshMeals();
   }, [user]);
 
   const handleLogout = () => {
@@ -44,7 +47,11 @@ const AccountScreen = () => {
           ) : (
             <View style={styles.mealsGrid}>
               {myMeals.map((meal) => (
-                <MealItem key={meal.$id} meal={meal} />
+                <MealItem
+                  key={meal.$id}
+                  meal={meal}
+                  refreshMeals={refreshMeals}
+                />
               ))}
             </View>
           )}
@@ -95,9 +102,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
   },
   mealsGrid: {
-    flexDirection: "row", // Arrange items in a row
-    flexWrap: "wrap", // Wrap items to the next row if needed
-    justifyContent: "space-evenly", // Distribute items evenly
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-evenly",
   },
 });
 
