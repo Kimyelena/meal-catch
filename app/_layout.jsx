@@ -72,7 +72,13 @@ const AppContent = () => {
     </TouchableOpacity>
   );
 
-  const handleModalAddMeal = async (name, description, imageUris, tags) => {
+  const handleModalAddMeal = async (
+    name,
+    description,
+    imageUris,
+    tags,
+    category
+  ) => {
     if (!user || !user.$id) {
       Alert.alert("Error", "You must be logged in to add a meal.");
       return;
@@ -84,7 +90,8 @@ const AppContent = () => {
         name,
         description,
         imageUris,
-        tags
+        tags,
+        category
       );
       if (result.error) {
         Alert.alert("Error", `Failed to add meal: ${result.error}`);
@@ -135,9 +142,6 @@ const AppContent = () => {
           name="notifications"
           options={{ title: "Notifications" }}
         />
-        {/* Ensure your main screens like 'index' and 'meals' are navigable */}
-        {/* <Stack.Screen name="index" options={{ headerShown: false }}/> */}
-        {/* <Stack.Screen name="meals" options={{ title: "My Meals" }}/> */}
       </Stack>
 
       {/* Floating Buttons and Modal - Only show if logged in */}

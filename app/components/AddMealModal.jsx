@@ -16,22 +16,20 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 const MIN_INPUT_HEIGHT = 70;
 const MAX_INPUT_HEIGHT = 150;
 
-const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
+const AddMealModal = ({
+  modalVisible,
+  setModalVisible,
+  addMeal,
+}) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUris, setImageUris] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [descriptionInputHeight, setDescriptionInputHeight] =
     useState(MIN_INPUT_HEIGHT);
 
-  const categoryDisplayOrder = [
-    "Handmade",
-    "LongLasting",
-    "Sweets",
-    "Nutrition",
-    "Other",
-  ];
+  const categoryDisplayOrder = ["Handmade", "LongLasting", "Sweets", "Other"];
 
   const defaultCategory = "Other";
 
@@ -39,8 +37,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     Handmade: "food-bank",
     LongLasting: "local-grocery-store",
     Sweets: "cake",
-    Nutrition: "vegetables",
-    Other: "category",
+    Others: "category",
   };
 
   const tags = [
@@ -130,7 +127,12 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       return;
     }
 
-    addMeal(mealName, description, imageUris, selectedTags);
+    if (!selectedCategory) {
+      alert("Please select a category.");
+      return;
+    }
+    console.log("Selected Category before addMeal:", selectedCategory);
+    addMeal(mealName, description, imageUris, selectedTags, selectedCategory);
     setMealName("");
     setDescription("");
     setImageUris([]);
@@ -445,7 +447,7 @@ const styles = StyleSheet.create({
     borderColor: "#0056b3",
   },
   categoryIcon: {
-    marginBottom: 2, 
+    marginBottom: 2,
   },
   categoryText: {
     color: "#333",

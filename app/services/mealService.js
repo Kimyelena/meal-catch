@@ -12,14 +12,19 @@ const mealService = {
         queries.push(Query.equal("user_id", userId));
       }
 
+      console.log("getMeals - queries:", queries); // Log the queries
+
       const response = await databaseService.listDocuments(
         dbId,
         colId,
         queries
       );
+
+      console.log("getMeals - response:", response); // Log the response
+
       return { data: response, error: null };
     } catch (error) {
-      console.error("Error fetching meals:", error);
+      console.error("Error fetching meals:", error); // Log the full error
       return { data: null, error: error.message };
     }
   },
@@ -30,9 +35,9 @@ const mealService = {
     description,
     imageUris = [],
     tags = [],
-    category = []
+    category
   ) {
-    console.log("--- ENTERING mealService.addMeal ---"); // Log function entry
+    console.log("--- ENTERING mealService.addMeal ---");
     console.log("Input Params:", {
       user_id,
       name,
@@ -73,8 +78,8 @@ const mealService = {
         name: name,
         createdAt: new Date().toISOString(),
         user_id: user_id,
-        imageUris: imageUris, // Ensure Appwrite attribute type is String Array
-        description: description, // Ensure key matches Appwrite attribute
+        imageUris: imageUris,
+        description: description,
         tags: tags,
         category: category,
       };

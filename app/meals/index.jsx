@@ -1,15 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Alert,
+  TouchableOpacity,
   ActivityIndicator,
   ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
-import MealItem from "../components/MealItem";
+import MealItemView from "../components/MealItemView";
+import { fetchMeals } from "../utils/mealUtils"; // Import the utility function
+import AddMealModal from "../components/AddMealModal";
 import mealService from "../services/mealService";
 
 const MealListScreen = () => {
@@ -19,13 +21,8 @@ const MealListScreen = () => {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [categories, setCategories] = useState([
-    "Home made",
-    "Trvanlive",
-    "Sweets",
-    "Others",
-    // Add all your categories here
-  ]);
+  const [categories, setCategories] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -35,28 +32,10 @@ const MealListScreen = () => {
 
   useEffect(() => {
     if (user) {
-      fetchAllMeals();
+      fetchMeals(null, setMeals, setLoading, setError);
+      console.log("MealListScreen - meals state:", meals); // LOG
     }
   }, [user]);
-
-  const fetchAllMeals = async () => {
-    setLoading(true);
-    try {
-      const response = await mealService.getMeals();
-
-      if (response.error) {
-        setError(response.error);
-        Alert.alert("Error", response.error);
-      } else {
-        setMeals(response.data.data);
-        setError(null);
-      }
-    } catch (error) {
-      setError("Failed to fetch meals.");
-      Alert.alert("Error", "Failed to fetch meals.");
-    }
-    setLoading(false);
-  };
 
   return (
     <View style={styles.container}>
@@ -70,14 +49,21 @@ const MealListScreen = () => {
             {categories.map((category) => (
               <View key={category} style={styles.categoryContainer}>
                 <Text style={styles.categoryTitle}>{category}</Text>
-                {meals
-                  .filter((meal) => meal.category === category)
-                  .map((meal) => (
-                    <MealItem key={meal.$id} meal={meal} />
-                  ))}
+                <ScrollView horizontal={true}>
+                  {meals
+                    .filter((meal) => meal.category === category)
+                    .map((meal) => (
+                      <MealItemView key={meal.$id} meal={meal} />
+                    ))}
+                </ScrollView>
               </View>
             ))}
           </ScrollView>
+          <AddMealModal
+            modalVisible={modalVisible}
+            setModalVisible={setModalVisible}
+            addMeal={mealService.createMeal}
+          />
         </>
       )}
     </View>

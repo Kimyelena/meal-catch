@@ -1,3 +1,4 @@
+// meal detailes, only for user who currently used app
 import React, { useState, useRef } from "react";
 import {
   View,
@@ -11,25 +12,41 @@ import {
   Alert,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
+import mealService from "../services/mealService"; // Import mealService
+import { fetchMeals } from "../utils/mealUtils"; // Import fetchMeals
 
-const MealItem = ({ meal, onDelete, onEdit }) => {
+const MealItem = ({ meal, refreshMeals }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(meal.text);
+  const [editedName, setEditedName] = useState(meal.name);
   const [editedDescription, setEditedDescription] = useState(meal.description);
   const [editedImageUris, setEditedImageUris] = useState(meal.imageUris);
   const inputRefName = useRef(null);
   const inputRefDescription = useRef(null);
 
-  const handleSave = () => {
-    if (editedName.trim() === "") {
+  const handleSave = async () => {
+    if (!editedName.trim()) {
       Alert.alert("Error", "Meal name cannot be empty");
       return;
     }
 
-    onEdit(meal.$id, editedName, editedDescription, editedImageUris);
-    setIsEditing(false);
-    setModalVisible(false);
+    try {
+      const response = await mealService.updateMeal(
+        meal.$id,
+        editedName,
+        editedDescription,
+        editedImageUris
+      );
+      if (response.error) {
+        Alert.alert("Error", response.error);
+      } else {
+        setIsEditing(false);
+        setModalVisible(false);
+        refreshMeals();
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to update meal.");
+    }
   };
 
   const handleDeleteImage = (indexToDelete) => {
@@ -38,14 +55,45 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
     );
   };
 
+  const handleDeleteMeal = async () => {
+    Alert.alert("Delete Meal", "Are you sure you want to delete this meal?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const response = await mealService.deleteMeal(meal.$id);
+            if (response.error) {
+              Alert.alert("Error", response.error);
+            } else {
+              setModalVisible(false);
+              refreshMeals(fetchMeals);
+            }
+          } catch (error) {
+            Alert.alert("Error", "Failed to delete meal.");
+          }
+        },
+      },
+    ]);
+  };
+
   return (
-    <TouchableOpacity onPress={() => setModalVisible(true)}>
-      <View style={styles.mealItem}>
-        {meal.imageUris && meal.imageUris.length > 0 && (
-          <Image source={{ uri: meal.imageUris[0] }} style={styles.mealImage} />
-        )}
-        <Text style={styles.mealText}>{meal.text}</Text>
-      </View>
+    <View style={styles.container}>
+      <TouchableOpacity onPress={() => setModalVisible(true)}>
+        <View style={styles.mealItem}>
+          {meal.imageUris && meal.imageUris.length > 0 && (
+            <Image
+              source={{ uri: meal.imageUris[0] }}
+              style={styles.mealImage}
+            />
+          )}
+          <Text style={styles.mealName}>{meal.name}</Text>
+        </View>
+      </TouchableOpacity>
 
       <Modal
         animationType="slide"
@@ -110,7 +158,9 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity onPress={() => onDelete(meal.$id)}>
+              <TouchableOpacity onPress={handleDeleteMeal}>
+                {" "}
+                {/* Call handleDeleteMeal */}
                 <Icon name="delete" size={24} color="gray" />
               </TouchableOpacity>
             </View>
@@ -125,11 +175,14 @@ const MealItem = ({ meal, onDelete, onEdit }) => {
           </View>
         </View>
       </Modal>
-    </TouchableOpacity>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    // New container to wrap the TouchableOpacity and Modal
+  },
   mealItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -144,7 +197,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 10,
   },
-  mealText: {
+  mealName: {
     fontSize: 18,
     flex: 1,
   },
