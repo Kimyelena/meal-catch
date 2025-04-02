@@ -1,3 +1,4 @@
+// AuthScreen.js
 import { useState } from "react";
 import {
   View,
@@ -12,39 +13,45 @@ import { useAuth } from "../contexts/AuthContext";
 
 const AuthScreen = () => {
   console.log("🛠 useAuth():", useAuth());
-  const { login, register } = useAuth();
+  const { login, register, user } = useAuth(); //added user
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState(false);
+  const [name, setName] = useState("");
 
   const handleAuth = async () => {
-    console.log("🔄 Přihlašování...", { email, password });
-    console.log("✅ Odpověď z authService:", response);
+    console.log("🔄 Přihlašování...", { email, password, name });
 
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
       return;
     }
 
-    if (isRegistering && password !== confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-
-    let response;
-
     if (isRegistering) {
-      response = await register(email, password);
-    } else {
-      response = await login(email, password);
-    }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+      if (!name.trim()) {
+        setError("User name is required");
+        return;
+      }
 
-    if (response?.error) {
-      Alert.alert("Error", response.error);
-      return;
+      const response = await register(email, password, name); //removed phoneNumber
+
+      if (response?.error) {
+        Alert.alert("Error", response.error);
+        return;
+      }
+    } else {
+      const response = await login(email, password);
+      if (response?.error) {
+        Alert.alert("Error", response.error);
+        return;
+      }
     }
 
     router.replace("/meals");
@@ -77,15 +84,25 @@ const AuthScreen = () => {
       />
 
       {isRegistering && (
-        <TextInput
-          style={styles.input}
-          placeholder="Confirm Password"
-          placeholderTextColor="#aaa"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          secureTextEntry
-          textContentType="none"
-        />
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Confirm Password"
+            placeholderTextColor="#aaa"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            textContentType="none"
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="User Name"
+            placeholderTextColor="#aaa"
+            value={name}
+            onChangeText={setName}
+          />
+        </>
       )}
 
       <TouchableOpacity style={styles.button} onPress={handleAuth}>
@@ -101,6 +118,7 @@ const AuthScreen = () => {
             : "Don't have an account? Sign Up"}
         </Text>
       </TouchableOpacity>
+      {user && <Text>Phone Number: {user.phone}</Text>}
     </View>
   );
 };

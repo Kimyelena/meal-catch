@@ -62,7 +62,8 @@ export const AuthProvider = ({ children }) => {
         return response;
       }
       // Registration successful, proceed to login
-      return await login(email, password); // This will handle user state and loading
+      await login(email, password); // This will handle user state and loading
+      return { success: true }; // Consistent success return
     } catch (error) {
       console.error("Registration error:", error);
       return { error: error.message || "Registration failed" };

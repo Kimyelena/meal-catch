@@ -6,6 +6,7 @@ const config = {
   db: process.env.EXPO_PUBLIC_APPWRITE_DB_ID,
   col: {
     meals: process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID,
+    users: process.env.EXPO_PUBLIC_APPWRITE_COL_USERS_ID,
   },
 };
 
@@ -13,14 +14,14 @@ const client = new Client()
   .setEndpoint(config.endpoint)
   .setProject(config.projectId);
 
-const database = new Databases(client);
+const databases = new Databases(client);
 const account = new Account(client);
 
 export default {
   client,
-  database,
+  databases,
   account,
   config,
 };
 
-export { client, database, account, config };
+export { client, databases, account, config };

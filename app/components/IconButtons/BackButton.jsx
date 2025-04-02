@@ -16,16 +16,10 @@ const BackButton = () => {
   };
 
   return (
-    <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+    <TouchableOpacity onPress={handleBackPress}>
       <MaterialIcons name="arrow-back" size={28} color="#fff" />
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  backButton: {
-    // Your chat button styles here
-  },
-});
 
 export default BackButton;

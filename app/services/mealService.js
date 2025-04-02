@@ -5,26 +5,40 @@ const dbId = process.env.EXPO_PUBLIC_APPWRITE_DB_ID;
 const colId = process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID;
 
 const mealService = {
-  async getMeals(userId) {
+  async getMeals() {
     try {
-      let queries = [];
-      if (userId) {
-        queries.push(Query.equal("user_id", userId));
-      }
-
-      console.log("getMeals - queries:", queries); // Log the queries
+      console.log("getAllMeals - fetching all meals");
 
       const response = await databaseService.listDocuments(
         dbId,
         colId,
-        queries
+        [] // Empty queries array to fetch all documents
       );
 
-      console.log("getMeals - response:", response); // Log the response
+      console.log("getAllMeals - response:", response);
 
       return { data: response, error: null };
     } catch (error) {
-      console.error("Error fetching meals:", error); // Log the full error
+      console.error("Error fetching all meals:", error);
+      return { data: null, error: error.message };
+    }
+  },
+
+  async getUsersMeals(userId) {
+    try {
+      console.log("getUsersMeals - fetching meals for user:", userId);
+
+      const response = await databaseService.listDocuments(
+        dbId,
+        colId,
+        [Query.equal("user_id", userId)] // Filter by user_id
+      );
+
+      console.log("getUsersMeals - response:", response);
+
+      return { data: response, error: null };
+    } catch (error) {
+      console.error("Error fetching user's meals:", error);
       return { data: null, error: error.message };
     }
   },

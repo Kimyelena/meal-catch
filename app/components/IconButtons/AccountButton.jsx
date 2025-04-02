@@ -23,7 +23,7 @@ const AccountButton = () => {
 
   return (
     <TouchableOpacity onPress={handleChatPress} style={styles.accountButton}>
-      <MaterialIcons name="account-circle" size={32} color="#007bff" />
+      <MaterialIcons name="account-circle" size={32} color="#fff" />
     </TouchableOpacity>
   );
 };

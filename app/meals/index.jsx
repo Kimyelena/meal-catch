@@ -102,15 +102,15 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   categoryTitle: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "bold",
     marginBottom: 10,
   },
   mealCard: {
     width: 150,
     height: 150,
-    marginRight: 10,
-    borderRadius: 8,
+    marginRight: 5,
+    borderRadius: 5,
     overflow: "hidden",
   },
   mealImage: {

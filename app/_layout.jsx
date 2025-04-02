@@ -13,9 +13,9 @@ import {
 
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
 import AddMealModal from "../app/components/AddMealModal";
-import ChatButton from "./components/IconButtons/ChatButton";
+// import ChatButton from "./components/IconButtons/ChatButton";
 import AccountButton from "./components/IconButtons/AccountButton";
-import NotificationButton from "./components/IconButtons/NotificationButton";
+// import NotificationButton from "./components/IconButtons/NotificationButton";
 import BackButton from "./components/IconButtons/BackButton";
 
 import mealService from "../app/services/mealService";
@@ -90,29 +90,32 @@ const AppContent = () => {
     <View style={{ flex: 1 }}>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: "#ff8c00" },
+          headerStyle: { backgroundColor: "#018786" },
           headerTintColor: "#fff",
           headerTitleStyle: { fontSize: 20, fontWeight: "bold" },
           headerRight: () => (
             <View style={{ flexDirection: "row" }}>
-              <NotificationButton />
+              {/* <NotificationButton /> */}
               <AccountButton />
             </View>
           ),
           headerLeft: () => (pathname !== "/meals" ? <BackButton /> : null),
         }}>
-        <Stack.Screen name="account" options={{ title: "Account" }} />
-        <Stack.Screen name="chat" options={{ title: "Chat" }} />
         <Stack.Screen
+          name="account"
+          options={{ title: `Welcome, ${user.name}!` }}
+        />
+        {/* <Stack.Screen name="chat" options={{ title: "Chat" }} /> */}
+        {/* <Stack.Screen
           name="notifications"
           options={{ title: "Notifications" }}
-        />
+        /> */}
       </Stack>
 
       {user && (
         <>
           <View style={styles.buttonContainer}>
-            <ChatButton />
+            {/* <ChatButton /> */}
             <TouchableOpacity
               style={styles.openModalButton}
               onPress={() => setModalVisible(true)}>
@@ -140,11 +143,11 @@ const RootLayout = () => {
 };
 
 const styles = StyleSheet.create({
-  centeredContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  // centeredContainer: {
+  //   flex: 1,
+  //   justifyContent: "center",
+  //   alignItems: "center",xw
+  // },
   buttonContainer: {
     position: "absolute",
     bottom: 20,
@@ -153,10 +156,10 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   openModalButton: {
-    backgroundColor: "#007bff",
-    borderRadius: 40,
-    width: 80,
-    height: 80,
+    backgroundColor: "#03dac6",
+    borderRadius: 50,
+    width: 100,
+    height: 100,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 10,
@@ -171,9 +174,9 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "bold",
   },
-  chatButton: {
-    marginBottom: 10,
-  },
+  // chatButton: {
+  //   marginBottom: 10,
+  // },
   backButton: {
     marginLeft: 10,
   },

@@ -1,10 +1,10 @@
-import { database } from "./appwrite";
+import { databases } from "./appwrite";
 
 const databaseService = {
   // List Documents
   async listDocuments(dbId, colId, queries = []) {
     try {
-      const response = await database.listDocuments(dbId, colId, queries);
+      const response = await databases.listDocuments(dbId, colId, queries);
       return { data: response.documents || [], error: null };
     } catch (error) {
       console.error("Error fetching documents:", error.message);
@@ -14,7 +14,7 @@ const databaseService = {
   // Create Documents
   async createDocument(dbId, colId, data, id = null) {
     try {
-      return await database.createDocument(dbId, colId, id || undefined, data);
+      return await databases.createDocument(dbId, colId, id || undefined, data);
     } catch (error) {
       console.error("Error creating document", error.message);
       return {
@@ -25,7 +25,7 @@ const databaseService = {
   // Update Document
   async updateDocument(dbId, colId, id, data) {
     try {
-      return await database.updateDocument(dbId, colId, id, data);
+      return await databases.updateDocument(dbId, colId, id, data);
     } catch (error) {
       console.error("Error updating document", error.message);
       return {
@@ -36,7 +36,7 @@ const databaseService = {
   // Delete Document
   async deleteDocument(dbId, colId, id) {
     try {
-      await database.deleteDocument(dbId, colId, id);
+      await databases.deleteDocument(dbId, colId, id);
       return { success: true };
     } catch (error) {
       console.error("Error deleting document", error.message);
