@@ -7,12 +7,14 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import { fetchMeals } from "../utils/mealUtils";
 import AddMealModal from "../components/AddMealModal";
 import mealService from "../services/mealService";
+import MealItemView from "../components/MealItemView";
 
 const MealListScreen = () => {
   const router = useRouter();
@@ -22,7 +24,9 @@ const MealListScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [addMealModalVisible, setAddMealModalVisible] = useState(false); // Separate state for AddMealModal
+  const [mealDetailsModalVisible, setMealDetailsModalVisible] = useState(false); // Separate state for Meal Details modal
+  const [selectedMeal, setSelectedMeal] = useState(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -37,13 +41,26 @@ const MealListScreen = () => {
     }
   }, [user]);
 
-  // useEffect to extract categories from meals
   useEffect(() => {
     if (meals && meals.length > 0) {
       const uniqueCategories = [...new Set(meals.map((meal) => meal.category))];
       setCategories(uniqueCategories);
     }
   }, [meals]);
+
+  const handleMealPress = (meal) => {
+    setSelectedMeal(meal);
+    setMealDetailsModalVisible(true); // Show Meal Details modal
+  };
+
+  const renderMealItem = ({ item }) => (
+    <TouchableOpacity
+      key={item.$id}
+      onPress={() => handleMealPress(item)}
+      style={styles.mealCard}>
+      <Image source={{ uri: item.imageUris[0] }} style={styles.mealImage} />
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -60,26 +77,35 @@ const MealListScreen = () => {
                 <ScrollView horizontal={true}>
                   {meals
                     .filter((meal) => meal.category === category)
-                    .map((meal) => (
-                      <TouchableOpacity
-                        key={meal.$id}
-                        onPress={() => router.push(`/meal/${meal.$id}`)}
-                        style={styles.mealCard}>
-                        <Image
-                          source={{ uri: meal.imageUris[0] }}
-                          style={styles.mealImage}
-                        />
-                      </TouchableOpacity>
-                    ))}
+                    .map((meal) => renderMealItem({ item: meal }))}
                 </ScrollView>
               </View>
             ))}
           </ScrollView>
           <AddMealModal
-            modalVisible={modalVisible}
-            setModalVisible={setModalVisible}
+            modalVisible={addMealModalVisible} // Use addMealModalVisible
+            setModalVisible={setAddMealModalVisible} // Use setAddMealModalVisible
             addMeal={mealService.addMeal}
           />
+          {/* Meal Details Modal */}
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={mealDetailsModalVisible} // Use mealDetailsModalVisible
+            onRequestClose={() => setMealDetailsModalVisible(false)} // Use setMealDetailsModalVisible
+          >
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                {selectedMeal && <MealItemView meal={selectedMeal} />}
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setMealDetailsModalVisible(false)} // Use setMealDetailsModalVisible
+                >
+                  <Text style={styles.modalCloseText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
     </View>
@@ -116,6 +142,34 @@ const styles = StyleSheet.create({
   mealImage: {
     width: "100%",
     height: "100%",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+    alignItems: "center",
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  modalCloseButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  modalCloseText: {
+    color: "white",
   },
   // Add other styles as needed
 });

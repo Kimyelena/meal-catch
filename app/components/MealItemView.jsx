@@ -1,83 +1,42 @@
-// meal details, how details displayed to all users across the platform
-import React, { useState } from "react";
+import React from "react";
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
-  Modal,
   Image,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const MealItemView = ({ meal }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-
+const MealItemView = ({ meal, userName, onPhonePress }) => {
   return (
-    <TouchableOpacity onPress={() => setModalVisible(true)}>
-      <View style={styles.mealItem}>
-        {meal.imageUris && meal.imageUris.length > 0 && (
-          <Image source={{ uri: meal.imageUris[0] }} style={styles.mealImage} />
-        )}
-        <Text style={styles.mealText}>{meal.name}</Text>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>{meal.name}</Text>
+
+      <ScrollView horizontal={true} style={styles.imageScroll}>
+        {meal.imageUris &&
+          meal.imageUris.map((uri, index) => (
+            <Image key={index} source={{ uri }} style={styles.detailImage} />
+          ))}
+      </ScrollView>
+
+      <View style={styles.userInfoContainer}>
+        <Text style={styles.userNameText}>By: {userName}</Text>
+        <TouchableOpacity onPress={onPhonePress}>
+          <View style={styles.phoneContainer}>
+            <MaterialIcons name="phone" size={24} color="#007bff" />
+            <Text style={styles.phoneText}>Contact</Text>
+          </View>
+        </TouchableOpacity>
       </View>
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{meal.name}</Text>
-            <ScrollView horizontal={true}>
-              {meal.imageUris &&
-                meal.imageUris.map((uri, index) => (
-                  <Image
-                    key={index}
-                    source={{ uri }}
-                    style={styles.detailImage}
-                  />
-                ))}
-            </ScrollView>
-            <Text style={styles.modalDescription}>{meal.description}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </TouchableOpacity>
+      <Text style={styles.modalDescription}>{meal.description}</Text>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  mealItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    padding: 15,
-    borderRadius: 5,
-    marginVertical: 5,
-  },
-  mealImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  mealText: {
-    fontSize: 18,
-    flex: 1,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
   modalContent: {
     backgroundColor: "white",
     padding: 20,
@@ -89,22 +48,39 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
+  imageScroll: {
+    maxHeight: 200, // Adjust as needed
+    marginBottom: 10,
+  },
   detailImage: {
-    width: "100%",
-    height: "100%",
+    width: 200, // Adjust as needed
+    height: 200, // Adjust as needed
     resizeMode: "cover",
+    marginRight: 10,
   },
   modalDescription: {
     marginTop: 10,
     fontSize: 16,
   },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
+  userInfoContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+    marginBottom: 10,
   },
-  closeButtonText: {
-    fontSize: 20,
+  userNameText: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  phoneContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  phoneText: {
+    fontSize: 16,
+    color: "#007bff",
+    marginLeft: 5,
   },
 });
 
