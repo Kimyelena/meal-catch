@@ -1,8 +1,6 @@
-// app/index.js
-
-import React from "react"; // Import React
+import React from "react";
 import { Text, View, StyleSheet, Image, TouchableOpacity } from "react-native";
-import PostItImage from "../assets/images/meal-catch-logo.png"; // Adjust path if needed
+import PostItImage from "../assets/images/meal-catch-logo.png";
 import { useRouter } from "expo-router";
 
 const HomeScreen = () => {

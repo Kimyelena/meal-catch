@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,14 +8,15 @@ import {
   FlatList,
   Image,
   Dimensions,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
-import MealItem from "../components/MealItem";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 const { width } = Dimensions.get("window");
 import mealService from "../services/mealService";
 import UserInfoContainer from "../components/UserInfoContainer";
+import MealItem from "../components/MealItem";
 
 const AccountScreen = () => {
   const { logout, user } = useAuth();
@@ -24,31 +25,32 @@ const AccountScreen = () => {
   const [myMeals, setMyMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedMeal, setSelectedMeal] = useState(null);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+
+  const fetchUserMeals = useCallback(async () => {
+    if (user) {
+      setLoading(true);
+      try {
+        const response = await mealService.getUsersMeals(user.$id);
+        if (response.data) {
+          setMyMeals(response.data.data);
+          setError(null);
+        } else if (response.error) {
+          setError(response.error);
+        }
+      } catch (error) {
+        setError("Failed to fetch meals.");
+        console.error("Error fetching user meals:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchUserMeals = async () => {
-      if (user) {
-        setLoading(true);
-        try {
-          const response = await mealService.getUsersMeals(user.$id);
-          if (response.data) {
-            setMyMeals(response.data.data);
-            setError(null);
-          } else if (response.error) {
-            setError(response.error);
-          }
-        } catch (error) {
-          setError("Failed to fetch meals.");
-          console.error("Error fetching user meals:", error);
-        } finally {
-          setLoading(false);
-          isFirstRender.current = false; // Set to false after first fetch
-        }
-      }
-    };
-
     fetchUserMeals();
-  }, [user]);
+  }, [fetchUserMeals]);
 
   const handleLogout = async () => {
     await logout();
@@ -58,17 +60,33 @@ const AccountScreen = () => {
   const handleSavePhoneNumber = (newPhoneNumber) => {
     console.log("Saving phone number:", newPhoneNumber);
     setUserPhoneNumber(newPhoneNumber);
-    // Here you would typically save the newPhoneNumber to your app's state management
-    // or make an API call to update the user's phone number in your backend.
+  };
+
+  const handleMealPress = (meal) => {
+    setSelectedMeal(meal);
+    setEditModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setEditModalVisible(false);
+    setSelectedMeal(null);
+    refreshMeals();
   };
 
   const renderMealItem = ({ item }) => (
     <TouchableOpacity
       style={styles.mealCard}
-      onPress={() => router.push(`/meal/${item.$id}`)}>
+      onPress={() => handleMealPress(item)}
+      key={item.$id}>
       <Image source={{ uri: item.imageUris[0] }} style={styles.mealImage} />
     </TouchableOpacity>
   );
+
+  const refreshMeals = () => {
+    if (user) {
+      fetchUserMeals();
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -100,6 +118,25 @@ const AccountScreen = () => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <MaterialIcons name="logout" size={24} color="#fff" />
       </TouchableOpacity>
+
+      {/* Modal for Editing/Deleting Meal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={editModalVisible}
+        onRequestClose={handleModalClose}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            {selectedMeal && (
+              <MealItem
+                meal={selectedMeal}
+                onClose={handleModalClose}
+                refreshMeals={refreshMeals}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -110,7 +147,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   content: {
-    flex: 0.95, // Take up most of the space
+    flex: 0.95,
   },
   flatListContent: {
     padding: 10,
@@ -132,15 +169,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
-    marginTop: 20,
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
   },
-  // logoutText: {
-  //   color: "#fff",
-  //   fontSize: 16,
-  // },
   errorText: {
     color: "red",
     textAlign: "center",
@@ -159,6 +191,18 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
     textAlign: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "90%",
   },
 });
 

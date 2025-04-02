@@ -15,8 +15,7 @@ import Icon from "react-native-vector-icons/MaterialIcons";
 import mealService from "../services/mealService";
 import * as ImagePicker from "expo-image-picker";
 
-const MealItem = ({ meal, refreshMeals }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+const MealItem = ({ meal, onClose, refreshMeals }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(meal.name);
   const [editedDescription, setEditedDescription] = useState(meal.description);
@@ -36,7 +35,7 @@ const MealItem = ({ meal, refreshMeals }) => {
         Alert.alert("Error", response.error);
       } else {
         setIsEditing(false);
-        setModalVisible(false);
+        onClose(); // Close the modal in AccountScreen
         refreshMeals();
       }
     } catch (error) {
@@ -63,7 +62,7 @@ const MealItem = ({ meal, refreshMeals }) => {
             if (response.error) {
               Alert.alert("Error", response.error);
             } else {
-              setModalVisible(false);
+              onClose(); // Close the modal in AccountScreen
               refreshMeals();
             }
           } catch (error) {
@@ -87,95 +86,72 @@ const MealItem = ({ meal, refreshMeals }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <View style={styles.mealItem}>
-          {meal.imageUris && meal.imageUris.length > 0 && (
-            <Image
-              source={{ uri: meal.imageUris[0] }}
-              style={styles.mealImage}
-            />
-          )}
-          <Text style={styles.mealName}>{meal.name}</Text>
-        </View>
-      </TouchableOpacity>
+    <View style={styles.modalContent}>
+      {isEditing ? (
+        <TextInput
+          style={styles.input}
+          value={editedName}
+          onChangeText={setEditedName}
+          autoFocus
+          onSubmitEditing={handleSave}
+          returnKeyType="done"
+        />
+      ) : (
+        <Text style={styles.modalTitle}>{editedName}</Text>
+      )}
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            {isEditing ? (
-              <TextInput
-                style={styles.input}
-                value={editedName}
-                onChangeText={setEditedName}
-                autoFocus
-                onSubmitEditing={handleSave}
-                returnKeyType="done"
-              />
-            ) : (
-              <Text style={styles.modalTitle}>{editedName}</Text>
-            )}
-
-            <ScrollView horizontal={true}>
-              {editedImageUris &&
-                editedImageUris.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.detailImage} />
-                    {isEditing && (
-                      <TouchableOpacity
-                        onPress={() => handleDeleteImage(index)}
-                        style={styles.deleteButton}></TouchableOpacity>
-                    )}
-                  </View>
-                ))}
-            </ScrollView>
-
-            {isEditing && <Button title="Add Image" onPress={pickImage} />}
-
-            {isEditing ? (
-              <TextInput
-                style={styles.descriptionInput}
-                value={editedDescription}
-                onChangeText={setEditedDescription}
-                multiline
-                numberOfLines={4}
-                onSubmitEditing={handleSave}
-                returnKeyType="done"
-              />
-            ) : (
-              <Text style={styles.modalDescription}>{editedDescription}</Text>
-            )}
-
-            <View style={styles.modalActions}>
-              {isEditing ? (
-                <TouchableOpacity onPress={handleSave}>
-                  <Icon name="check" size={24} color="green" />
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={() => setIsEditing(true)}>
-                  <Icon name="edit" size={24} color="gray" />
-                </TouchableOpacity>
+      <ScrollView horizontal={true}>
+        {editedImageUris &&
+          editedImageUris.map((uri, index) => (
+            <View key={index} style={styles.imageWrapper}>
+              <Image source={{ uri }} style={styles.detailImage} />
+              {isEditing && (
+                <TouchableOpacity
+                  onPress={() => handleDeleteImage(index)}
+                  style={styles.deleteButton}></TouchableOpacity>
               )}
-
-              <TouchableOpacity onPress={handleDeleteMeal}>
-                <Icon name="delete" size={24} color="gray" />
-              </TouchableOpacity>
             </View>
-            <Text style={styles.hintText}>
-              All items will be removed in 3 days.
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}>
-              <Text style={styles.closeButtonText}>X</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+          ))}
+      </ScrollView>
+
+      {isEditing && <Button title="Add Image" onPress={pickImage} />}
+
+      {isEditing ? (
+        <TextInput
+          style={styles.descriptionInput}
+          value={editedDescription}
+          onChangeText={setEditedDescription}
+          multiline
+          numberOfLines={4}
+          onSubmitEditing={handleSave}
+          returnKeyType="done"
+        />
+      ) : (
+        <Text style={styles.modalDescription}>{editedDescription}</Text>
+      )}
+
+      <View style={styles.modalActions}>
+        {isEditing ? (
+          <TouchableOpacity onPress={handleSave}>
+            <Icon name="check" size={24} color="green" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={() => setIsEditing(true)}>
+            <Icon name="edit" size={24} color="gray" />
+          </TouchableOpacity>
+        )}
+
+        <TouchableOpacity onPress={handleDeleteMeal}>
+          <Icon name="delete" size={24} color="gray" />
+        </TouchableOpacity>
+      </View>
+      <Text style={styles.hintText}>All items will be removed in 3 days.</Text>
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={onClose} // Use onClose to close modal
+      >
+        <Text style={styles.closeButtonText}>X</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -258,6 +234,11 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  hintText: {
+    fontSize: 12,
+    color: "gray",
+    marginTop: 10,
   },
 });
 

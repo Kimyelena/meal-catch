@@ -5,7 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Modal,
-  TextInput, // Import TextInput
+  TextInput,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
@@ -15,10 +15,10 @@ const UserInfoContainer = ({
   onPhoneNumberSave,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber); // Local state for editing
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
 
   const handleSavePhoneNumber = () => {
-    onPhoneNumberSave(phoneNumber); // Call the parent's save function
+    onPhoneNumberSave(phoneNumber);
     setModalVisible(false);
   };
 
@@ -49,10 +49,7 @@ const UserInfoContainer = ({
               {initialPhoneNumber ? "Edit Phone Number" : "Enter Phone Number"}
             </Text>
             <TextInput
-              style={[
-                styles.modalInput,
-                styles.modalInputInvisible, // Apply invisible style
-              ]}
+              style={[styles.modalInput, styles.modalInputInvisible]}
               value={phoneNumber}
               onChangeText={setPhoneNumber}
               keyboardType="phone-pad"

@@ -49,12 +49,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   imageScroll: {
-    maxHeight: 200, // Adjust as needed
+    maxHeight: 200,
     marginBottom: 10,
   },
   detailImage: {
-    width: 200, // Adjust as needed
-    height: 200, // Adjust as needed
+    width: 200,
+    height: 200,
     resizeMode: "cover",
     marginRight: 10,
   },

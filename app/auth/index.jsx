@@ -12,8 +12,7 @@ import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 
 const AuthScreen = () => {
-  console.log("🛠 useAuth():", useAuth());
-  const { login, register, user } = useAuth(); //added user
+  const { login, register, user } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,8 +22,6 @@ const AuthScreen = () => {
   const [name, setName] = useState("");
 
   const handleAuth = async () => {
-    console.log("🔄 Přihlašování...", { email, password, name });
-
     if (!email.trim() || !password.trim()) {
       setError("Email and password are required");
       return;
@@ -40,7 +37,7 @@ const AuthScreen = () => {
         return;
       }
 
-      const response = await register(email, password, name); //removed phoneNumber
+      const response = await register(email, password, name);
 
       if (response?.error) {
         Alert.alert("Error", response.error);

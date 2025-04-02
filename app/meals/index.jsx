@@ -24,8 +24,8 @@ const MealListScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
-  const [addMealModalVisible, setAddMealModalVisible] = useState(false); // Separate state for AddMealModal
-  const [mealDetailsModalVisible, setMealDetailsModalVisible] = useState(false); // Separate state for Meal Details modal
+  const [addMealModalVisible, setAddMealModalVisible] = useState(false);
+  const [mealDetailsModalVisible, setMealDetailsModalVisible] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState(null);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ const MealListScreen = () => {
 
   const handleMealPress = (meal) => {
     setSelectedMeal(meal);
-    setMealDetailsModalVisible(true); // Show Meal Details modal
+    setMealDetailsModalVisible(true);
   };
 
   const renderMealItem = ({ item }) => (
@@ -83,24 +83,22 @@ const MealListScreen = () => {
             ))}
           </ScrollView>
           <AddMealModal
-            modalVisible={addMealModalVisible} // Use addMealModalVisible
-            setModalVisible={setAddMealModalVisible} // Use setAddMealModalVisible
+            modalVisible={addMealModalVisible}
+            setModalVisible={setAddMealModalVisible}
             addMeal={mealService.addMeal}
           />
           {/* Meal Details Modal */}
           <Modal
             animationType="slide"
             transparent={true}
-            visible={mealDetailsModalVisible} // Use mealDetailsModalVisible
-            onRequestClose={() => setMealDetailsModalVisible(false)} // Use setMealDetailsModalVisible
-          >
+            visible={mealDetailsModalVisible}
+            onRequestClose={() => setMealDetailsModalVisible(false)}>
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 {selectedMeal && <MealItemView meal={selectedMeal} />}
                 <TouchableOpacity
                   style={styles.modalCloseButton}
-                  onPress={() => setMealDetailsModalVisible(false)} // Use setMealDetailsModalVisible
-                >
+                  onPress={() => setMealDetailsModalVisible(false)}>
                   <Text style={styles.modalCloseText}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -171,7 +169,6 @@ const styles = StyleSheet.create({
   modalCloseText: {
     color: "white",
   },
-  // Add other styles as needed
 });
 
 export default MealListScreen;

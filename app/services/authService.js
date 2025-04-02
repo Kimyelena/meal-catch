@@ -8,7 +8,6 @@ const colId = process.env.EXPO_PUBLIC_APPWRITE_COL_USERS_ID;
 const authService = {
   // Register a user
   async register(email, password, name) {
-    //removed phoneNumber
     console.log("Register function called with:", { email, password, name });
     try {
       console.log("Attempting account.create...");

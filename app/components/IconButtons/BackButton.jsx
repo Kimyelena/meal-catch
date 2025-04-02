@@ -11,7 +11,7 @@ const BackButton = () => {
     if (isClicking.current) return;
 
     isClicking.current = true;
-    router.back(); // Use router.back() to go to the previous page
+    router.back();
     setTimeout(() => (isClicking.current = false), 500);
   };
 

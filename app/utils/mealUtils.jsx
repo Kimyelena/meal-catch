@@ -8,7 +8,7 @@ export const fetchMeals = async (
   setError,
   isUserSpecific = false
 ) => {
-  console.log("fetchMeals - start", { userId, isUserSpecific }); // Log input
+  console.log("fetchMeals - start", { userId, isUserSpecific });
 
   setLoading(true);
   try {
@@ -16,11 +16,11 @@ export const fetchMeals = async (
     if (isUserSpecific && userId) {
       console.log("fetchMeals - calling getMealsByUser", userId);
       response = await mealService.getMeals(userId);
-      console.log("fetchMeals - getMealsByUser response:", response); // Log response
+      console.log("fetchMeals - getMealsByUser response:", response);
     } else {
       console.log("fetchMeals - calling getMeals");
       response = await mealService.getMeals();
-      console.log("fetchMeals - getMeals response:", response); // Log response
+      console.log("fetchMeals - getMeals response:", response);
     }
 
     if (response.error) {
@@ -39,5 +39,5 @@ export const fetchMeals = async (
     Alert.alert("Error", "Failed to fetch meals.");
   }
   setLoading(false);
-  console.log("fetchMeals - end"); // Log end
+  console.log("fetchMeals - end");
 };

@@ -9,11 +9,7 @@ const mealService = {
     try {
       console.log("getAllMeals - fetching all meals");
 
-      const response = await databaseService.listDocuments(
-        dbId,
-        colId,
-        [] // Empty queries array to fetch all documents
-      );
+      const response = await databaseService.listDocuments(dbId, colId, []);
 
       console.log("getAllMeals - response:", response);
 
@@ -28,11 +24,9 @@ const mealService = {
     try {
       console.log("getUsersMeals - fetching meals for user:", userId);
 
-      const response = await databaseService.listDocuments(
-        dbId,
-        colId,
-        [Query.equal("user_id", userId)] // Filter by user_id
-      );
+      const response = await databaseService.listDocuments(dbId, colId, [
+        Query.equal("user_id", userId),
+      ]);
 
       console.log("getUsersMeals - response:", response);
 
@@ -67,7 +61,6 @@ const mealService = {
       console.error(
         "STOPPING: dbId or colId is undefined/empty. Check .env and EXPO_PUBLIC_ prefix!"
       );
-      // Throw error to ensure it's caught by the caller's catch block
       throw new Error("Missing Database or Collection ID configuration.");
     }
     if (
@@ -85,9 +78,8 @@ const mealService = {
     }
     // --- End Checks ---
 
-    let data; // Define here to log it even if try block fails early
+    let data;
     try {
-      // Construct data object
       data = {
         name: name,
         createdAt: new Date().toISOString(),
@@ -107,17 +99,14 @@ const mealService = {
         ID.unique()
       );
       console.log("databaseService.createDocument SUCCEEDED:", response);
-      return { data: response, error: null }; // Success path
+      return { data: response, error: null };
     } catch (error) {
-      // This catches errors specifically FROM databaseService.createDocument
       console.error("!!! CATCH block inside mealService.addMeal reached !!!");
       console.error(
         "Error occurred AFTER data construction, likely during DB call."
       );
-      console.error("Data object at time of error:", data); // Log the data that failed
-      console.error("Full error details:", error); // Log the actual error from Appwrite/DB service
-
-      // Return the standard error format so the caller can display it
+      console.error("Data object at time of error:", data);
+      console.error("Full error details:", error);
       return {
         data: null,
         error: error.message || "Failed to save meal to database.",
@@ -157,7 +146,7 @@ const mealService = {
     try {
       await databaseService.deleteDocument(dbId, colId, id);
       console.log("deleteMeal success for ID:", id);
-      return { data: { success: true, id: id }, error: null }; // Return success indicator
+      return { data: { success: true, id: id }, error: null };
     } catch (error) {
       console.error("Error deleting meal:", error);
       return { data: null, error: error.message };

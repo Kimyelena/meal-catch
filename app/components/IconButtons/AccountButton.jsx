@@ -6,32 +6,26 @@ import { account } from "../../services/appwrite";
 
 const AccountButton = () => {
   const router = useRouter();
-  const isClicking = useRef(false); // Initialize useRef to false
+  const isClicking = useRef(false);
 
   const handleChatPress = () => {
     if (isClicking.current) {
-      return; // Prevent multiple clicks
+      return;
     }
 
-    isClicking.current = true; // Indicate a click is in progress
+    isClicking.current = true;
     router.push("/account");
 
     setTimeout(() => {
-      isClicking.current = false; // Reset after a delay
+      isClicking.current = false;
     }, 500);
   };
 
   return (
-    <TouchableOpacity onPress={handleChatPress} style={styles.accountButton}>
+    <TouchableOpacity onPress={handleChatPress}>
       <MaterialIcons name="account-circle" size={32} color="#fff" />
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  accountButton: {
-    // Your chat button styles here
-  },
-});
 
 export default AccountButton;
