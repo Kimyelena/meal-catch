@@ -41,7 +41,7 @@ const AppContent = () => {
         console.log(
           "AppContent Effect: User found, redirecting from / to /meals"
         );
-        router.replace("/meals");
+        router.replace("/(meals)");
       }
     }
   }, [user, loading, pathname, router]);
@@ -99,11 +99,16 @@ const AppContent = () => {
               <AccountButton />
             </View>
           ),
-          headerLeft: () => (pathname !== "/meals" ? <BackButton /> : null),
+          headerLeft: () => null,
         }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(meals)" options={{ title: "Browse Meals" }} />
         <Stack.Screen
-          name="account"
-          options={{ title: `Welcome, ${user.name}!` }}
+          name="(account)"
+          options={{
+            title: user ? `Hello! ${user.name}` : "Account",
+          }}
         />
         {/* <Stack.Screen name="chat" options={{ title: "Chat" }} /> */}
         {/* <Stack.Screen
@@ -177,9 +182,9 @@ const styles = StyleSheet.create({
   // chatButton: {
   //   marginBottom: 10,
   // },
-  backButton: {
-    marginLeft: 10,
-  },
+  // backButton: {
+  //   marginLeft: 10,
+  // },
 });
 
 export default RootLayout;

@@ -8,35 +8,48 @@ import {
   TextInput,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { useAuth } from "../contexts/AuthContext";
+import updateUserNameAndNumber from "../services/authService"; // Import updateUserNameAndNumber
 
-const UserInfoContainer = ({
-  name,
-  phoneNumber: initialPhoneNumber,
-  onPhoneNumberSave,
-}) => {
+const UserInfoContainer = ({ onPhoneNumberSave }) => {
+  const { user } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
+  const [phoneNumber, setPhoneNumber] = useState(user?.number || null);
 
-  const handleSavePhoneNumber = () => {
-    onPhoneNumberSave(phoneNumber);
+  const handleSavePhoneNumber = async (newPhoneNumber) => {
+    onPhoneNumberSave(newPhoneNumber);
+    setPhoneNumber(newPhoneNumber);
     setModalVisible(false);
+    console.log("Phone number saved:", newPhoneNumber);
+    console.log("phoneNumber state:", newPhoneNumber);
+
+    // Call handleUpdateUser to update the number in the database
+    if (user && user.$id) {
+      await handleUpdateUser(user.$id, user.name, newPhoneNumber);
+    }
   };
+
+  async function handleUpdateUser(userId, newName, newNumber) {
+    const result = await updateUserNameAndNumber(userId, newName, newNumber);
+
+    if (result.success) {
+      console.log("User updated:", result.updatedDocument);
+    } else {
+      console.error("Failed to update user:", result.error);
+    }
+  }
 
   return (
     <View style={styles.container}>
-      {/* <Text style={styles.name}>Name: {name}</Text> */}
-      <TouchableOpacity onPress={() => setModalVisible(true)}>
-        <View style={styles.phoneContainer}>
-          <MaterialIcons
-            name="phone"
-            size={24}
-            color={initialPhoneNumber ? "#007bff" : "#b00020"}
-          />
-          {/* <Text style={styles.phoneText}>
-            {initialPhoneNumber ? "Show/Edit Phone" : "Add Phone"}
-          </Text> */}
-        </View>
-      </TouchableOpacity>
+      <View style={styles.phoneContainer}>
+        <MaterialIcons name="phone" size={24} color="#007bff" />
+        <Text style={styles.phoneText}>
+          Phone: {phoneNumber ? phoneNumber : "Not Provided"}
+        </Text>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Text style={styles.editPhoneText}>Edit</Text>
+        </TouchableOpacity>
+      </View>
 
       <Modal
         animationType="slide"
@@ -45,12 +58,10 @@ const UserInfoContainer = ({
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {initialPhoneNumber ? "Edit Phone Number" : "Enter Phone Number"}
-            </Text>
+            <Text style={styles.modalTitle}>Edit Phone Number</Text>
             <TextInput
-              style={[styles.modalInput, styles.modalInputInvisible]}
-              value={phoneNumber}
+              style={styles.modalInput}
+              value={phoneNumber || ""}
               onChangeText={setPhoneNumber}
               keyboardType="phone-pad"
               placeholder="+420XXXXXXXXX"
@@ -63,7 +74,7 @@ const UserInfoContainer = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalSaveButton}
-                onPress={handleSavePhoneNumber}>
+                onPress={() => handleSavePhoneNumber(phoneNumber)}>
                 <Text style={styles.modalButtonText}>Save</Text>
               </TouchableOpacity>
             </View>
@@ -81,19 +92,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  name: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 5,
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    marginBottom: 10,
   },
   phoneContainer: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   phoneText: {
     fontSize: 16,
     color: "#007bff",
     marginLeft: 5,
+  },
+  editPhoneText: {
+    fontSize: 16,
+    color: "#007bff",
   },
   modalOverlay: {
     flex: 1,

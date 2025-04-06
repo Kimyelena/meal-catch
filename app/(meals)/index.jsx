@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
   ActivityIndicator,
   ScrollView,
   Image,
@@ -17,9 +17,8 @@ import mealService from "../services/mealService";
 import MealItemView from "../components/MealItemView";
 
 const MealListScreen = () => {
+  const { logout, user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
-
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,7 +29,7 @@ const MealListScreen = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/auth");
+      router.replace("/(auth)");
     }
   }, [user, authLoading]);
 
@@ -53,6 +52,12 @@ const MealListScreen = () => {
     setMealDetailsModalVisible(true);
   };
 
+  const handleModalClose = () => {
+    setMealDetailsModalVisible(false);
+    setSelectedMeal(null);
+    refreshMeals();
+  };
+
   const renderMealItem = ({ item }) => (
     <TouchableOpacity
       key={item.$id}
@@ -61,6 +66,12 @@ const MealListScreen = () => {
       <Image source={{ uri: item.imageUris[0] }} style={styles.mealImage} />
     </TouchableOpacity>
   );
+
+  const refreshMeals = () => {
+    if (user) {
+      fetchMeals(user.$id, setMeals, setLoading, setError);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -89,18 +100,20 @@ const MealListScreen = () => {
           />
           {/* Meal Details Modal */}
           <Modal
-            animationType="slide"
+            animationType="none"
             transparent={true}
             visible={mealDetailsModalVisible}
-            onRequestClose={() => setMealDetailsModalVisible(false)}>
+            onRequestClose={handleModalClose}
+          >
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
-                {selectedMeal && <MealItemView meal={selectedMeal} />}
-                <TouchableOpacity
-                  style={styles.modalCloseButton}
-                  onPress={() => setMealDetailsModalVisible(false)}>
-                  <Text style={styles.modalCloseText}>Close</Text>
-                </TouchableOpacity>
+                {selectedMeal && (
+                  <MealItemView
+                    meal={selectedMeal}
+                    onClose={handleModalClose}
+                    visible={mealDetailsModalVisible}
+                  />
+                )}
               </View>
             </View>
           </Modal>
@@ -113,7 +126,8 @@ const MealListScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingTop: 20,
+    paddingLeft: 10,
     backgroundColor: "#fff",
   },
   errorText: {
@@ -131,8 +145,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   mealCard: {
-    width: 150,
-    height: 150,
+    width: 140,
+    height: 140,
     marginRight: 5,
     borderRadius: 5,
     overflow: "hidden",

@@ -9,25 +9,26 @@ import {
   Image,
   Alert,
   ScrollView,
+  ActivityIndicator, // For loading indicator
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
+import imageService from "../services/imageService"; //  Import imageService
 
 const MIN_INPUT_HEIGHT = 70;
 const MAX_INPUT_HEIGHT = 150;
 
-const AddMealModal = ({
-  modalVisible,
-  setModalVisible,
-  addMeal,
-}) => {
+const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUris, setImageUris] = useState([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]); //  New state for uploaded URLs
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [descriptionInputHeight, setDescriptionInputHeight] =
     useState(MIN_INPUT_HEIGHT);
+  const [loading, setLoading] = useState(false); //  Add loading state
 
   const categoryDisplayOrder = ["Handmade", "LongLasting", "Sweets", "Other"];
 
@@ -121,7 +122,7 @@ const AddMealModal = ({
     setSelectedCategory(category);
   };
 
-  const handleAddMeal = () => {
+  const handleAddMeal = async () => {
     if (!mealName || !mealName.trim()) {
       alert("Meal name cannot be empty");
       return;
@@ -131,14 +132,50 @@ const AddMealModal = ({
       alert("Please select a category.");
       return;
     }
-    console.log("Selected Category before addMeal:", selectedCategory);
-    addMeal(mealName, description, imageUris, selectedTags, selectedCategory);
-    setMealName("");
-    setDescription("");
-    setImageUris([]);
-    setSelectedTags([]);
-    setSelectedCategory(null);
-    setModalVisible(false);
+
+    try {
+      setLoading(true); //  Start loading
+
+      const uploadedUrls = [];
+      for (const uri of imageUris) {
+        const url = await imageService.uploadImageAndGetUrl(
+          uri,
+          "67f2e60c003e78f626bdd"
+        ); //  Replace with your bucket ID
+        if (url) {
+          uploadedUrls.push(url);
+        } else {
+          Alert.alert("Error", `Failed to upload one or more images.`);
+          setLoading(false);
+          return; //  Stop if any upload fails
+        }
+      }
+      console.log(
+        "Final uploadedUrls array:",
+        JSON.stringify(uploadedUrls, null, 2)
+      ); //  <---  USE JSON.stringify
+
+      await addMeal(
+        mealName,
+        description,
+        uploadedUrls,
+        selectedTags,
+        selectedCategory
+      ); //  Use uploadedUrls
+
+      setMealName("");
+      setDescription("");
+      setImageUris([]);
+      setUploadedImageUrls([]);
+      setSelectedTags([]);
+      setSelectedCategory(null);
+      setModalVisible(false);
+    } catch (error) {
+      console.error("Error adding meal:", error);
+      Alert.alert("Error", "Failed to add meal.");
+    } finally {
+      setLoading(false); //  Stop loading
+    }
   };
 
   const handleToggleTag = (tag) => {
@@ -160,6 +197,7 @@ const AddMealModal = ({
       setMealName("");
       setDescription("");
       setImageUris([]);
+      setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
       setDescriptionInputHeight(MIN_INPUT_HEIGHT);
@@ -191,16 +229,20 @@ const AddMealModal = ({
             <ScrollView
               horizontal={true}
               showsHorizontalScrollIndicator={false}>
-              {imageUris.map((uri, index) => (
-                <View key={index} style={styles.imageWrapper}>
-                  <Image source={{ uri }} style={styles.imagePreview} />
-                  <TouchableOpacity
-                    onPress={() => handleDeleteImage(index)}
-                    style={styles.deleteButton}>
-                    <Text>x</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
+              {loading ? (
+                <ActivityIndicator size="small" color="#007bff" />
+              ) : (
+                imageUris.map((uri, index) => (
+                  <View key={index} style={styles.imageWrapper}>
+                    <Image source={{ uri }} style={styles.imagePreview} />
+                    <TouchableOpacity
+                      onPress={() => handleDeleteImage(index)}
+                      style={styles.deleteButton}>
+                      <Text>x</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
             </ScrollView>
           </View>
           <TextInput
@@ -273,7 +315,9 @@ const AddMealModal = ({
             ))}
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
-            <Text style={styles.addButtonText}>Zverejnit</Text>
+            <Text style={styles.addButtonText}>
+              {loading ? "Uploading..." : "Zverejnit"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -288,15 +332,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
-  // modalContent: {
-  //   width: "90%",
-  //   maxHeight: "90%", // Crucial for ScrollView to work within the modal view
-  //   backgroundColor: "#fff",
-  //   borderRadius: 10,
-  //   padding: 20,
-  //   alignItems: "center",
-  //   marginVertical: 20, // Ensure space for scrolling
-  // },
   modalContent: {
     width: "95%",
     height: "85%",
@@ -306,14 +341,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
-  // input: {
-  //   width: "100%",
-  //   padding: 10,
-  //   borderWidth: 1,
-  //   borderColor: "#ccc",
-  //   borderRadius: 8,
-  //   marginBottom: 1,
-  // },
   addButton: {
     backgroundColor: "#28a745",
     paddingVertical: 10,
@@ -332,7 +359,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    // zIndex: 3,
   },
   closeButtonText: {
     fontSize: 30,
@@ -378,12 +404,6 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: "center",
     alignItems: "center",
-  },
-  scrollViewContent: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 20,
   },
   input: {
     width: "100%",

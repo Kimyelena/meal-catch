@@ -1,53 +1,50 @@
 // authService.js
 import { account, databases } from "./appwrite";
-import { ID } from "react-native-appwrite";
+import { ID, Query } from "react-native-appwrite";
 
 const dbId = process.env.EXPO_PUBLIC_APPWRITE_DB_ID;
 const colId = process.env.EXPO_PUBLIC_APPWRITE_COL_USERS_ID;
 
 const authService = {
   // Register a user
-  async register(email, password, name) {
-    console.log("Register function called with:", { email, password, name });
+  async register(email, password, name, number) {
     try {
-      console.log("Attempting account.create...");
-      const response = await account.create(ID.unique(), email, password, name);
-      console.log("account.create successful. Response:", response);
-
-      console.log("Attempting databases.createDocument...");
-      const databaseResponse = await databases.createDocument(
-        dbId,
-        colId,
-        response.$id,
-        {
-          name: name,
-          email: email,
-        }
+      // 1. Create account
+      const accountResponse = await account.create(
+        ID.unique(),
+        email,
+        password
       );
-      console.log(
-        "databases.createDocument successful. Response:",
-        databaseResponse
-      );
+      if (accountResponse.error) throw accountResponse.error; //  Throw if there's an error
 
-      // Log the user in immediately after registration
-      console.log("Attempting login after registration...");
+      // 2. Login
       const loginResponse = await account.createEmailPasswordSession(
         email,
         password
       );
-      console.log(
-        "Login after registration successful. Response:",
-        loginResponse
-      );
+      if (loginResponse.error) throw loginResponse.error; //  Throw if there's an error
 
-      console.log("Register function returning:", {
-        ...response,
-        databaseResponse,
-        loginResponse,
-      });
-      return { ...response, databaseResponse, loginResponse };
+      // 3. Update Name (Appwrite specific)
+      const updateNameResponse = await account.updateName(name);
+      if (updateNameResponse.error) throw updateNameResponse.error;
+
+      // 4. Create user document in database
+      const databaseResponse = await databases.createDocument(
+        dbId,
+        colId,
+        accountResponse.$id,
+        {
+          name: name,
+          email: email,
+          number: number,
+          user_id: accountResponse.$id,
+        }
+      );
+      if (databaseResponse.error) throw databaseResponse.error;
+
+      return { accountResponse, databaseResponse, loginResponse };
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("authService.register error:", error);
       return {
         error: error.message || "Registration failed. Please try again",
       };
@@ -70,8 +67,25 @@ const authService = {
   // Get logged in user
   async getUser() {
     try {
-      return await account.get();
+      const userAccount = await account.get();
+      if (!userAccount) {
+        return null;
+      }
+
+      const documents = await databases.listDocuments(dbId, colId, [
+        Query.equal("user_id", userAccount.$id),
+      ]);
+
+      if (documents.total > 0 && documents.documents.length > 0) {
+        return {
+          ...userAccount,
+          number: documents.documents[0].number, // Include number here
+        };
+      } else {
+        return userAccount; // Or handle as needed
+      }
     } catch (error) {
+      console.error("Error getting user:", error);
       return null;
     }
   },
@@ -85,6 +99,79 @@ const authService = {
       };
     }
   },
+
+  async getUserDetails(userId) {
+    try {
+      const documents = await databases.listDocuments(dbId, colId, [
+        Query.equal("user_id", userId),
+      ]);
+
+      if (documents.total > 0 && documents.documents.length > 0) {
+        return {
+          number: documents.documents[0].number, // Correct key
+          ...documents.documents[0],
+        };
+      }
+    } catch (error) {
+      console.error("Error getting user details:", error);
+      return null;
+    }
+  },
 };
+
+async function updateUserNameAndNumber(userId, newName, newNumber) {
+  try {
+    console.log(
+      "Updating user:",
+      userId,
+      "name:",
+      newName,
+      "number:",
+      newNumber
+    );
+
+    const documents = await databases.listDocuments(dbId, colId, [
+      Query.equal("user_id", userId),
+    ]);
+
+    if (documents.total > 0 && documents.documents.length > 0) {
+      const documentId = documents.documents[0].$id;
+      console.log("Found document ID:", documentId);
+
+      const updateData = {
+        name: newName,
+        number: String(newNumber),
+      };
+      console.log("Update data:", updateData);
+
+      const updatedDocument = await databases.updateDocument(
+        dbId,
+        colId,
+        documentId,
+        updateData
+      );
+
+      console.log("updateDocument result:", updatedDocument);
+
+      if (updatedDocument && updatedDocument.$id) {
+        console.log("Update successful:", updatedDocument);
+        return { success: true, updatedDocument };
+      } else if (updatedDocument && updatedDocument.error) {
+        // Check for error
+        console.error("Update failed:", updatedDocument.error);
+        return { success: false, error: updatedDocument.error };
+      } else {
+        console.error("Update failed: Unknown reason");
+        return { success: false, error: "Database update failed" };
+      }
+    } else {
+      console.log("User not found:", userId);
+      return { success: false, error: "User not found" };
+    }
+  } catch (error) {
+    console.error("Database update error:", error);
+    return { success: false, error: error.message };
+  }
+}
 
 export default authService;

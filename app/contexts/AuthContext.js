@@ -45,32 +45,37 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (email, password) => {
+  const register = async (email, password, name, number) => {
     setLoading(true);
     try {
-      const response = await authService.register(email, password);
-      if (response?.error) {
-        return response;
+      const result = await authService.register(email, password, name, number);
+
+      if (result?.error) {
+        setLoading(false);
+        return { error: result.error };
       }
-      await login(email, password);
+
+      //  If registration and login are successful, set user in context
+      //  (You'll need to fetch the user details here, adjust to your needs)
+      const userDetails = await authService.getUser(); //  Fetch user details
+      setUser(userDetails);
+
+      setLoading(false);
       return { success: true };
     } catch (error) {
-      console.error("Registration error:", error);
-      return { error: error.message || "Registration failed" };
-    } finally {
+      console.error("authContext.register error:", error);
       setLoading(false);
+      return { error: error.message || "Registration failed" };
     }
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
-      await authService.logout();
+      await authService.logout(); // Assuming your logout function
+      router.replace("/(auth)"); // Navigate to login
     } catch (error) {
-      console.error("Logout service error:", error);
-    } finally {
-      setUser(null);
-      setLoading(false);
+      console.error("Logout error:", error);
+      // Handle the error (e.g., show an alert)
     }
   };
 

@@ -13,6 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+
 const { width } = Dimensions.get("window");
 import mealService from "../services/mealService";
 import UserInfoContainer from "../components/UserInfoContainer";
@@ -21,12 +22,12 @@ import MealItem from "../components/MealItem";
 const AccountScreen = () => {
   const { logout, user } = useAuth();
   const router = useRouter();
-  const [userPhoneNumber, setUserPhoneNumber] = useState("");
+  const [setUserPhoneNumber] = useState("");
   const [myMeals, setMyMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedMeal, setSelectedMeal] = useState(null);
-  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [isMealModalVisible, setIsMealModalVisible] = useState(false);
 
   const fetchUserMeals = useCallback(async () => {
     if (user) {
@@ -54,21 +55,24 @@ const AccountScreen = () => {
 
   const handleLogout = async () => {
     await logout();
-    router.replace("/auth");
+    router.replace("/(auth)");
   };
 
-  const handleSavePhoneNumber = (newPhoneNumber) => {
+  const handleSavePhoneNumber = async (newPhoneNumber) => {
     console.log("Saving phone number:", newPhoneNumber);
     setUserPhoneNumber(newPhoneNumber);
-  };
 
+    await fetchUserMeals();
+  };
   const handleMealPress = (meal) => {
+    console.log("AccountScreen: handleMealPress - Opening modal");
     setSelectedMeal(meal);
-    setEditModalVisible(true);
+    setIsMealModalVisible(true);
   };
 
   const handleModalClose = () => {
-    setEditModalVisible(false);
+    console.log("AccountScreen: handleModalClose - Closing modal");
+    setIsMealModalVisible(false);
     setSelectedMeal(null);
     refreshMeals();
   };
@@ -97,8 +101,7 @@ const AccountScreen = () => {
           {error && <Text style={styles.errorText}>{error}</Text>}
           {user && (
             <UserInfoContainer
-              name={user.name}
-              phoneNumber={userPhoneNumber}
+              phoneNumber={user.number}
               onPhoneNumberSave={handleSavePhoneNumber}
             />
           )}
@@ -121,9 +124,10 @@ const AccountScreen = () => {
 
       {/* Modal for Editing/Deleting Meal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
-        visible={editModalVisible}
+        visible={isMealModalVisible}
+        key={isMealModalVisible}
         onRequestClose={handleModalClose}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -132,6 +136,7 @@ const AccountScreen = () => {
                 meal={selectedMeal}
                 onClose={handleModalClose}
                 refreshMeals={refreshMeals}
+                visible={isMealModalVisible}
               />
             )}
           </View>

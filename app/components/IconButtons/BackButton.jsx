@@ -11,7 +11,7 @@ const BackButton = () => {
     if (isClicking.current) return;
 
     isClicking.current = true;
-    router.back();
+    router.replace("/(meals)"); // Always redirect to /meals
     setTimeout(() => (isClicking.current = false), 500);
   };
 

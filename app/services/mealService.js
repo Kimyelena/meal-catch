@@ -1,5 +1,6 @@
 import databaseService from "./databaseService";
 import { ID, Query } from "react-native-appwrite";
+import imageService from "./imageService";
 
 const dbId = process.env.EXPO_PUBLIC_APPWRITE_DB_ID;
 const colId = process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID;
@@ -80,11 +81,23 @@ const mealService = {
 
     let data;
     try {
+      // 1. Upload Images and Get URLs
+      const uploadedImageUrls = [];
+      for (const uri of imageUris) {
+        const imageUrl = await imageService.uploadImageAndGetUrl(
+          uri,
+          "67f2e60c003e78f626bd"
+        ); // Replace with your bucket ID
+        if (imageUrl) {
+          uploadedImageUrls.push(imageUrl);
+        }
+      }
+
       data = {
         name: name,
         createdAt: new Date().toISOString(),
         user_id: user_id,
-        imageUris: imageUris,
+        imageUris: uploadedImageUrls, // Use uploaded URLs
         description: description,
         tags: tags,
         category: category,

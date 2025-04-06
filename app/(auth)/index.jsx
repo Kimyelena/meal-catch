@@ -20,6 +20,7 @@ const AuthScreen = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [error, setError] = useState(false);
   const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
 
   const handleAuth = async () => {
     if (!email.trim() || !password.trim()) {
@@ -28,30 +29,23 @@ const AuthScreen = () => {
     }
 
     if (isRegistering) {
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-      if (!name.trim()) {
-        setError("User name is required");
-        return;
-      }
-
-      const response = await register(email, password, name);
+      const response = await register(email, password, name, number);
 
       if (response?.error) {
         Alert.alert("Error", response.error);
         return;
       }
+      // Only navigate if registration is successful
+      router.replace("/(meals)");
     } else {
       const response = await login(email, password);
       if (response?.error) {
         Alert.alert("Error", response.error);
         return;
       }
+      // Only navigate if login is successful
+      router.replace("/(meals)");
     }
-
-    router.replace("/meals");
   };
 
   return (
@@ -94,10 +88,18 @@ const AuthScreen = () => {
 
           <TextInput
             style={styles.input}
-            placeholder="User Name"
+            placeholder="Nickname"
             placeholderTextColor="#aaa"
             value={name}
             onChangeText={setName}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Phone number"
+            placeholderTextColor="#aaa"
+            value={number}
+            onChangeText={setNumber}
           />
         </>
       )}
