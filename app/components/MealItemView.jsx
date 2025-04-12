@@ -39,7 +39,7 @@ const MealItemView = ({ meal, onClose, visible }) => {
     } else {
       setMealDetails({});
     }
-  }, [visible, meal.userId]); // Corrected dependency array
+  }, [visible, meal.user_id]);
 
   useEffect(() => {
     if (visible) {

@@ -129,7 +129,9 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
                   {isEditing && (
                     <TouchableOpacity
                       onPress={() => handleDeleteImage(index)}
-                      style={styles.deleteButton}></TouchableOpacity>
+                      style={styles.deleteButton}>
+                      <Text style={styles.deleteButtonText}>✕</Text>
+                    </TouchableOpacity>
                   )}
                 </View>
               ))}
@@ -191,9 +193,6 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
 };
 
 const styles = StyleSheet.create({
-  mealName: {
-    fontSize: 18,
-  },
   modalContent: {
     backgroundColor: "white",
     borderTopLeftRadius: 20,
@@ -238,6 +237,16 @@ const styles = StyleSheet.create({
     borderBottomColor: "#aaa",
     marginBottom: 10,
   },
+  descriptionInput: {
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#aaa",
+    borderRadius: 5,
+    padding: 10,
+    marginVertical: 10,
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
   imageWrapper: {
     position: "relative",
     marginRight: 5,
@@ -252,6 +261,11 @@ const styles = StyleSheet.create({
     height: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  deleteButtonText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "bold",
   },
   modalOverlay: {
     flex: 1,

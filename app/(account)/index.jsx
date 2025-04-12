@@ -191,12 +191,6 @@ const styles = StyleSheet.create({
     color: "#555",
     marginTop: 15,
   },
-  userName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
   modalOverlay: {
     flex: 1,
     justifyContent: "center",

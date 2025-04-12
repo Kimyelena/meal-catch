@@ -236,7 +236,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
+          <Text style={styles.sectionTitle}>Offer Food</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
@@ -271,7 +271,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder="Jake jidlo nabizete?"
+            placeholder="What food are you offering?"
             value={mealName}
             onChangeText={setMealName}
           />
@@ -281,7 +281,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
               styles.descriptionInput,
               { height: descriptionInputHeight },
             ]}
-            placeholder="Popis prosim, co to je :D"
+            placeholder="Please describe what it is"
             value={description}
             onChangeText={setDescription}
             multiline={true}
@@ -340,7 +340,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
           </View>
           <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
             <Text style={styles.addButtonText}>
-              {loading ? "Uploading..." : "Zverejnit"}
+              {loading ? "Uploading..." : "Add Meal"}
             </Text>
           </TouchableOpacity>
         </View>
