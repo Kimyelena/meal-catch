@@ -1,6 +1,5 @@
 import storageService from "./storageService";
 import { config } from "./appwrite";
-import RNFS from "react-native-fs";
 
 const imageService = {
   async uploadImagesAndGetUrls(imageUris) {
@@ -28,7 +27,7 @@ const imageService = {
 
             if (originalUri.startsWith("file://")) {
               try {
-                const fileContent = await RNFS.readFile(originalUri, "base64");
+                const fileContent = await readFile(originalUri, "base64");
                 // **DETERMINE THE CORRECT MIME TYPE HERE!**
                 // Example (very basic, unreliable):
                 if (originalUri.toLowerCase().endsWith(".png")) {

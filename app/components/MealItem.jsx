@@ -24,7 +24,7 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
   const [editedName, setEditedName] = useState(meal.name);
   const [editedDescription, setEditedDescription] = useState(meal.description);
   const [editedImageUris, setEditedImageUris] = useState(meal.imageUris);
-  const modalAnimation = useRef(new Animated.Value(0)).current; // Start at 0 height
+  const modalAnimation = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(true);
 
   useEffect(() => {
@@ -41,10 +41,9 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
         useNativeDriver: false,
       }).start(() => {
         modalAnimation.setValue(height);
-        // ADDED DELAY:
         setTimeout(() => {
-          onClose(); // Call onClose after a delay
-        }, 1); // Adjust delay as needed (milliseconds)
+          onClose();
+        }, 1);
       });
     }
   }, [modalVisible]);

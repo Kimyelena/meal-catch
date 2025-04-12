@@ -11,18 +11,35 @@ import {
   Dimensions,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import authService from "../services/authService";
 
 const { height } = Dimensions.get("window");
 
-const MealItemView = ({
-  meal,
-  mealOwnerName,
-  mealOwnerNumber,
-  onClose,
-  visible,
-}) => {
+const MealItemView = ({ meal, onClose, visible }) => {
   const modalAnimation = useRef(new Animated.Value(height)).current;
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
+  const [mealDetails, setMealDetails] = useState({});
+
+  useEffect(() => {
+    if (visible && meal.user_id) {
+      const fetchUserDetails = async () => {
+        try {
+          const userDetails = await authService.getUserDetails(meal.user_id);
+          if (userDetails) {
+            setMealDetails({
+              ownerName: userDetails.name,
+              ownerNumber: userDetails.number,
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
+      };
+      fetchUserDetails();
+    } else {
+      setMealDetails({});
+    }
+  }, [visible, meal.userId]); // Corrected dependency array
 
   useEffect(() => {
     if (visible) {
@@ -70,7 +87,7 @@ const MealItemView = ({
           </ScrollView>
 
           <View style={styles.userInfoContainer}>
-            <Text style={styles.userNameText}>By: {mealOwnerName}</Text>
+            <Text style={styles.userNameText}>By: {mealDetails.ownerName}</Text>
             <TouchableOpacity onPress={handlePhonePress}>
               <View style={styles.phoneContainer}>
                 <MaterialIcons name="phone" size={24} color="#007bff" />
@@ -78,7 +95,9 @@ const MealItemView = ({
               </View>
             </TouchableOpacity>
             {showPhoneNumber && (
-              <Text style={styles.phoneNumberText}>{mealOwnerNumber}</Text>
+              <Text style={styles.phoneNumberText}>
+                {mealDetails.ownerNumber}
+              </Text>
             )}
           </View>
 
