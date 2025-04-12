@@ -35,7 +35,6 @@ const AuthScreen = () => {
         Alert.alert("Error", response.error);
         return;
       }
-      // Only navigate if registration is successful
       router.replace("/(meals)");
     } else {
       const response = await login(email, password);
@@ -43,7 +42,6 @@ const AuthScreen = () => {
         Alert.alert("Error", response.error);
         return;
       }
-      // Only navigate if login is successful
       router.replace("/(meals)");
     }
   };

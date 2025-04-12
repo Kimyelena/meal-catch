@@ -17,7 +17,7 @@ import mealService from "../services/mealService";
 import MealItemView from "../components/MealItemView";
 
 const MealListScreen = () => {
-  const { logout, user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,8 +103,7 @@ const MealListScreen = () => {
             animationType="none"
             transparent={true}
             visible={mealDetailsModalVisible}
-            onRequestClose={handleModalClose}
-          >
+            onRequestClose={handleModalClose}>
             <View style={styles.modalOverlay}>
               <View style={styles.modalContent}>
                 {selectedMeal && (

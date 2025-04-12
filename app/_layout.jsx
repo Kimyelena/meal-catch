@@ -1,5 +1,3 @@
-// app/_layout.js
-
 import React, { useState, useEffect, useRef } from "react"; // Import React and hooks
 import { Stack, useRouter, usePathname } from "expo-router";
 import {

@@ -1,4 +1,3 @@
-// authService.js
 import { account, databases } from "./appwrite";
 import { ID, Query } from "react-native-appwrite";
 
@@ -9,26 +8,19 @@ const authService = {
   // Register a user
   async register(email, password, name, number) {
     try {
-      // 1. Create account
       const accountResponse = await account.create(
         ID.unique(),
         email,
         password
       );
-      if (accountResponse.error) throw accountResponse.error; //  Throw if there's an error
-
-      // 2. Login
+      if (accountResponse.error) throw accountResponse.error;
       const loginResponse = await account.createEmailPasswordSession(
         email,
         password
       );
-      if (loginResponse.error) throw loginResponse.error; //  Throw if there's an error
-
-      // 3. Update Name (Appwrite specific)
+      if (loginResponse.error) throw loginResponse.error;
       const updateNameResponse = await account.updateName(name);
       if (updateNameResponse.error) throw updateNameResponse.error;
-
-      // 4. Create user document in database
       const databaseResponse = await databases.createDocument(
         dbId,
         colId,
@@ -103,14 +95,17 @@ const authService = {
   async getUserDetails(userId) {
     try {
       const documents = await databases.listDocuments(dbId, colId, [
-        Query.equal("user_id", userId),
+        Query.equal("$id", userId),
       ]);
 
       if (documents.total > 0 && documents.documents.length > 0) {
         return {
-          number: documents.documents[0].number, // Correct key
+          number: documents.documents[0].number,
+          name: documents.documents[0].name,
           ...documents.documents[0],
         };
+      } else {
+        return null;
       }
     } catch (error) {
       console.error("Error getting user details:", error);
@@ -129,35 +124,28 @@ async function updateUserNameAndNumber(userId, newName, newNumber) {
       "number:",
       newNumber
     );
-
     const documents = await databases.listDocuments(dbId, colId, [
       Query.equal("user_id", userId),
     ]);
-
     if (documents.total > 0 && documents.documents.length > 0) {
       const documentId = documents.documents[0].$id;
       console.log("Found document ID:", documentId);
-
       const updateData = {
         name: newName,
         number: String(newNumber),
       };
       console.log("Update data:", updateData);
-
       const updatedDocument = await databases.updateDocument(
         dbId,
         colId,
         documentId,
         updateData
       );
-
       console.log("updateDocument result:", updatedDocument);
-
       if (updatedDocument && updatedDocument.$id) {
         console.log("Update successful:", updatedDocument);
         return { success: true, updatedDocument };
       } else if (updatedDocument && updatedDocument.error) {
-        // Check for error
         console.error("Update failed:", updatedDocument.error);
         return { success: false, error: updatedDocument.error };
       } else {

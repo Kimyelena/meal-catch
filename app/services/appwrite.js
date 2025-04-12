@@ -1,8 +1,9 @@
-import { Client, Databases, Account, Storage } from "react-native-appwrite";
+import { Client, Databases, Account, Storage, ID } from "react-native-appwrite";
 
 const config = {
   endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
+  bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
   db: process.env.EXPO_PUBLIC_APPWRITE_DB_ID,
   col: {
     meals: process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID,
@@ -23,6 +24,7 @@ export default {
   databases,
   account,
   config,
+  ID,
 };
 
-export { client, databases, account, config, storage };
+export { client, databases, account, config, storage, ID };

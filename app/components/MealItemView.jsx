@@ -14,8 +14,15 @@ import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 const { height } = Dimensions.get("window");
 
-const MealItemView = ({ meal, userName, onPhonePress, onClose, visible }) => {
+const MealItemView = ({
+  meal,
+  mealOwnerName,
+  mealOwnerNumber,
+  onClose,
+  visible,
+}) => {
   const modalAnimation = useRef(new Animated.Value(height)).current;
+  const [showPhoneNumber, setShowPhoneNumber] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -33,6 +40,10 @@ const MealItemView = ({ meal, userName, onPhonePress, onClose, visible }) => {
     }
   }, [visible]);
 
+  const handlePhonePress = () => {
+    setShowPhoneNumber(!showPhoneNumber);
+  };
+
   return (
     <Modal
       animationType="none"
@@ -40,7 +51,6 @@ const MealItemView = ({ meal, userName, onPhonePress, onClose, visible }) => {
       visible={visible}
       onRequestClose={onClose}
       style={{
-        // Direct styles on Modal
         justifyContent: "flex-end",
       }}>
       <View style={styles.modalOverlay}>
@@ -60,13 +70,16 @@ const MealItemView = ({ meal, userName, onPhonePress, onClose, visible }) => {
           </ScrollView>
 
           <View style={styles.userInfoContainer}>
-            <Text style={styles.userNameText}>By: {userName}</Text>
-            <TouchableOpacity onPress={onPhonePress}>
+            <Text style={styles.userNameText}>By: {mealOwnerName}</Text>
+            <TouchableOpacity onPress={handlePhonePress}>
               <View style={styles.phoneContainer}>
                 <MaterialIcons name="phone" size={24} color="#007bff" />
                 <Text style={styles.phoneText}>Contact</Text>
               </View>
             </TouchableOpacity>
+            {showPhoneNumber && (
+              <Text style={styles.phoneNumberText}>{mealOwnerNumber}</Text>
+            )}
           </View>
 
           <Text style={styles.modalDescription}>{meal.description}</Text>
@@ -83,7 +96,7 @@ const MealItemView = ({ meal, userName, onPhonePress, onClose, visible }) => {
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)", // Only background color
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
     backgroundColor: "white",
@@ -147,6 +160,10 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  phoneNumberText: {
+    marginTop: 10,
     fontWeight: "bold",
   },
 });

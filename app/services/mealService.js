@@ -1,6 +1,7 @@
 import databaseService from "./databaseService";
 import { ID, Query } from "react-native-appwrite";
 import imageService from "./imageService";
+import { config } from "./appwrite";
 
 const dbId = process.env.EXPO_PUBLIC_APPWRITE_DB_ID;
 const colId = process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID;
@@ -55,12 +56,10 @@ const mealService = {
       tags,
       category,
     });
-
-    // --- Critical Variable Checks ---
     console.log("Using dbId:", dbId, "| colId:", colId);
     if (!dbId || !colId) {
       console.error(
-        "STOPPING: dbId or colId is undefined/empty. Check .env and EXPO_PUBLIC_ prefix!"
+        "dbId or colId is undefined/empty. Check .env and EXPO_PUBLIC_ prefix!"
       );
       throw new Error("Missing Database or Collection ID configuration.");
     }
@@ -69,12 +68,12 @@ const mealService = {
       typeof databaseService.createDocument !== "function"
     ) {
       console.error(
-        "STOPPING: databaseService or databaseService.createDocument is invalid!"
+        "databaseService or databaseService.createDocument is invalid!"
       );
       throw new Error("Database service is not configured correctly.");
     }
     if (typeof ID?.unique !== "function") {
-      console.error("STOPPING: Appwrite ID.unique function is not available!");
+      console.error("Appwrite ID.unique function is not available!");
       throw new Error("Appwrite ID function missing.");
     }
     // --- End Checks ---
@@ -84,10 +83,10 @@ const mealService = {
       // 1. Upload Images and Get URLs
       const uploadedImageUrls = [];
       for (const uri of imageUris) {
-        const imageUrl = await imageService.uploadImageAndGetUrl(
+        const imageUrl = await imageService.uploadImagesAndGetUrls(
           uri,
-          "67f2e60c003e78f626bd"
-        ); // Replace with your bucket ID
+          config.bucketId
+        );
         if (imageUrl) {
           uploadedImageUrls.push(imageUrl);
         }

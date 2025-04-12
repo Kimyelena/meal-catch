@@ -9,12 +9,13 @@ import {
   Image,
   Alert,
   ScrollView,
-  ActivityIndicator, // For loading indicator
+  ActivityIndicator,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
-import imageService from "../services/imageService"; //  Import imageService
+import imageService from "../services/imageService";
+import { config } from "../services/appwrite";
 
 const MIN_INPUT_HEIGHT = 70;
 const MAX_INPUT_HEIGHT = 150;
@@ -23,12 +24,13 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUris, setImageUris] = useState([]);
-  const [uploadedImageUrls, setUploadedImageUrls] = useState([]); //  New state for uploaded URLs
+  const [originalImageUris, setOriginalImageUris] = useState([]); // New state
+  const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [descriptionInputHeight, setDescriptionInputHeight] =
     useState(MIN_INPUT_HEIGHT);
-  const [loading, setLoading] = useState(false); //  Add loading state
+  const [loading, setLoading] = useState(false);
 
   const categoryDisplayOrder = ["Handmade", "LongLasting", "Sweets", "Other"];
 
@@ -81,6 +83,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       });
       if (!result.canceled) {
         setImageUris((prevUris) => [...prevUris, result.assets[0].uri]);
+        setOriginalImageUris((prevUris) => [...prevUris, result.assets[0].uri]); // Store original URI
       }
     } catch (error) {
       console.log("Error opening camera:", error);
@@ -99,6 +102,10 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       if (!result.canceled && result.assets) {
         const urisArray = result.assets.map((asset) => asset.uri);
         setImageUris((prevUris) => [...prevUris, ...urisArray]);
+        setOriginalImageUris((prevUris) => [
+          ...prevUris,
+          ...result.assets.map((asset) => asset.uri),
+        ]); // Store original URIs
       }
     } catch (error) {
       console.error("Gallery Error:", error);
@@ -134,47 +141,60 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     }
 
     try {
-      setLoading(true); //  Start loading
+      setLoading(true);
 
-      const uploadedUrls = [];
-      for (const uri of imageUris) {
-        const url = await imageService.uploadImageAndGetUrl(
-          uri,
-          "67f2e60c003e78f626bdd"
-        ); //  Replace with your bucket ID
-        if (url) {
-          uploadedUrls.push(url);
+      let uploadedUrls = [];
+      if (imageUris.length > 0) {
+        const uploadResults = await imageService.uploadImagesAndGetUrls(
+          imageUris
+        ); // Call imageService
+        console.log("uploadResults:", uploadResults);
+
+        if (uploadResults) {
+          uploadedUrls = uploadResults.filter((url) => url !== null);
+          if (uploadedUrls.length !== imageUris.length) {
+            Alert.alert(
+              "Error",
+              "Failed to upload all images. Some images may be missing."
+            );
+            setLoading(false);
+            return;
+          }
         } else {
-          Alert.alert("Error", `Failed to upload one or more images.`);
+          Alert.alert("Error", "Failed to upload images.");
           setLoading(false);
-          return; //  Stop if any upload fails
+          return;
         }
       }
+
       console.log(
         "Final uploadedUrls array:",
         JSON.stringify(uploadedUrls, null, 2)
-      ); //  <---  USE JSON.stringify
+      );
 
       await addMeal(
         mealName,
         description,
         uploadedUrls,
+        originalImageUris, // Pass original URIs
         selectedTags,
         selectedCategory
-      ); //  Use uploadedUrls
+      );
+      console.log("Original Image URIs before addMeal:", originalImageUris);
 
       setMealName("");
       setDescription("");
       setImageUris([]);
+      setOriginalImageUris([]); // Clear original URIs
       setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
       setModalVisible(false);
     } catch (error) {
       console.error("Error adding meal:", error);
-      Alert.alert("Error", "Failed to add meal.");
+      Alert.alert("Error", `Failed to add meal: ${error.message}`);
     } finally {
-      setLoading(false); //  Stop loading
+      setLoading(false);
     }
   };
 
@@ -190,6 +210,9 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     setImageUris((prevUris) =>
       prevUris.filter((_, index) => index !== indexToDelete)
     );
+    setOriginalImageUris((prevUris) =>
+      prevUris.filter((_, index) => index !== indexToDelete)
+    ); // Delete original URI
   };
 
   useEffect(() => {
@@ -197,6 +220,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       setMealName("");
       setDescription("");
       setImageUris([]);
+      setOriginalImageUris([]); // Clear original URIs
       setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
@@ -396,8 +420,8 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     position: "absolute",
-    top: -5,
-    right: -5,
+    top: 10,
+    right: 10,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 15,
     width: 20,
