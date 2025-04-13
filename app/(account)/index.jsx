@@ -34,15 +34,20 @@ const AccountScreen = () => {
       setLoading(true);
       try {
         const response = await mealService.getUsersMeals(user.$id);
-        if (response.data) {
-          setMyMeals(response.data.data);
+        if (response.data && response.data.documents) {
+          setMyMeals(response.data.documents || []);
           setError(null);
         } else if (response.error) {
           setError(response.error);
+          setMyMeals([]);
+        } else {
+          setMyMeals([]);
+          setError("Invalid data structure received from server");
         }
       } catch (error) {
         setError("Failed to fetch meals.");
         console.error("Error fetching user meals:", error);
+        setMyMeals([]);
       } finally {
         setLoading(false);
       }
@@ -105,11 +110,11 @@ const AccountScreen = () => {
               onPhoneNumberSave={handleSavePhoneNumber}
             />
           )}
-          {myMeals.length === 0 ? (
+          {(myMeals?.length || 0) === 0 ? (
             <Text style={styles.noMealsText}>You have no meals</Text>
           ) : (
             <FlatList
-              data={myMeals}
+              data={myMeals || []}
               renderItem={renderMealItem}
               keyExtractor={(item) => item.$id}
               numColumns={3}

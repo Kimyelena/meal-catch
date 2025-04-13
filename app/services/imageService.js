@@ -1,117 +1,74 @@
 import storageService from "./storageService";
+import { Platform } from "react-native";
+import * as FileSystem from "expo-file-system";
 import { config } from "./appwrite";
 
 const imageService = {
+  /**
+   * Uploads multiple images and returns their URLs
+   * @param {Array} imageUris - Array of image URIs to upload
+   * @returns {Promise<Array>} - Promise with array of uploaded image URLs
+   */
   async uploadImagesAndGetUrls(imageUris) {
-    console.log("Bucket ID:", config.bucketId);
-    if (!config.bucketId) {
-      const errorMessage =
-        "Error: bucketId is not defined. Check your environment variables.";
-      console.error(errorMessage);
-      return Promise.reject(new Error(errorMessage));
+    if (!imageUris || imageUris.length === 0) {
+      console.log("No images to upload");
+      return [];
     }
 
-    if (!Array.isArray(imageUris) || imageUris.length === 0) {
-      console.warn("imageUris is empty or not an array. Skipping upload.");
-      return Promise.resolve([]);
+    console.log(`uploadImagesAndGetUrls received: ${imageUris.length} images`);
+
+    // Check if configuration is available
+    if (!config || !config.bucketId) {
+      console.error("Storage bucket ID is not configured properly");
+      throw new Error(
+        "Storage bucket ID is not configured. Check your appwrite.js configuration."
+      );
     }
 
     try {
-      const uploadResults = await Promise.all(
-        imageUris.map(async (originalUri) => {
-          try {
-            console.log(`Uploading image: ${originalUri}`);
+      const uploadPromises = imageUris.map(async (uri) => {
+        // Handle different URI formats based on platform
+        let fileUri = uri;
+        if (uri.startsWith("file://") && Platform.OS === "ios") {
+          fileUri = uri.replace("file://", "");
+        }
 
-            let blob;
-            let mimeType = "image/jpeg"; // Default, change as needed!
+        console.log(`Processing image: ${fileUri}`);
 
-            if (originalUri.startsWith("file://")) {
-              try {
-                const fileContent = await readFile(originalUri, "base64");
-                // **DETERMINE THE CORRECT MIME TYPE HERE!**
-                // Example (very basic, unreliable):
-                if (originalUri.toLowerCase().endsWith(".png")) {
-                  mimeType = "image/png";
-                } else if (
-                  originalUri.toLowerCase().endsWith(".jpg") ||
-                  originalUri.toLowerCase().endsWith(".jpeg")
-                ) {
-                  mimeType = "image/jpeg";
-                }
-                blob = new Blob([fileContent], { type: mimeType });
-              } catch (readFileError) {
-                console.error(
-                  `Error reading file ${originalUri}:`,
-                  readFileError
-                );
-                throw new Error(`Could not read file: ${originalUri}`);
-              }
-            } else {
-              const response = await fetch(originalUri);
-              if (!response.ok) {
-                throw new Error(
-                  `HTTP error ${response.status} fetching ${originalUri}`
-                );
-              }
-              try {
-                blob = await response.blob();
-                mimeType = blob.type; // Use the type from the response
-              } catch (blobError) {
-                console.error(
-                  `Error creating blob from fetch for ${originalUri}:`,
-                  blobError
-                );
-                throw new Error(
-                  `Could not create blob from fetch: ${originalUri}`
-                );
-              }
-            }
+        try {
+          // Upload the file using storageService
+          const uploadResult = await storageService.uploadFile(fileUri);
 
-            console.log("Blob:", blob);
-            console.log("Blob Type:", mimeType);
-            console.log("Blob Size:", blob.size);
-
-            const uploadResult = await storageService.uploadFile(
-              blob,
-              config.bucketId
-            );
-
-            if (uploadResult.error) {
-              const uploadErrorMessage = `Upload failed for ${originalUri}: ${uploadResult.error}`;
-              console.error(uploadErrorMessage);
-              throw new Error(uploadErrorMessage);
-            }
-
-            const uploadedFileId = uploadResult.data;
-            console.log(`Uploaded file ID: ${uploadedFileId}`);
-
-            const imageUrl = await storageService.getFileViewUrl(
-              uploadedFileId,
-              config.bucketId
-            );
-
-            if (!imageUrl) {
-              const urlErrorMessage = `Failed to get file view URL for: ${originalUri}`;
-              console.error(urlErrorMessage);
-              throw new Error(urlErrorMessage);
-            }
-
-            console.log(`Generated URL: ${imageUrl}`);
-            return imageUrl;
-          } catch (processingError) {
-            console.error(
-              `Error processing image ${originalUri}:`,
-              processingError
-            );
-            return Promise.reject(processingError);
+          if (!uploadResult || !uploadResult.data) {
+            console.error("Upload failed, no result data returned");
+            return null;
           }
-        })
-      );
 
-      return uploadResults;
-    } catch (overallError) {
-      console.error("Error uploading images:", overallError);
-      return null;
+          // Get the file view URL
+          const fileId = uploadResult.data;
+          const fileUrl = storageService.getFileViewUrl(fileId);
+
+          console.log(
+            `Successfully uploaded image. File ID: ${fileId}, URL: ${fileUrl}`
+          );
+          return fileUrl;
+        } catch (error) {
+          console.error(`Error uploading individual image: ${error.message}`);
+          return null;
+        }
+      });
+
+      // Wait for all uploads to complete and filter out failed uploads
+      const results = await Promise.all(uploadPromises);
+      const validUrls = results.filter((url) => url !== null);
+
+      console.log(
+        `Successfully uploaded ${validUrls.length} of ${imageUris.length} images`
+      );
+      return validUrls;
+    } catch (error) {
+      console.error("Error in uploadImagesAndGetUrls:", error);
+      throw error;
     }
   },
 };

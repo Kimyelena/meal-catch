@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"; // Import React and hooks
+import React, { useState, useEffect, useCallback } from "react"; // Added useCallback
 import { Stack, useRouter, usePathname } from "expo-router";
 import {
   TouchableOpacity,
@@ -11,9 +11,7 @@ import {
 
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
 import AddMealModal from "../app/components/AddMealModal";
-// import ChatButton from "./components/IconButtons/ChatButton";
 import AccountButton from "./components/IconButtons/AccountButton";
-// import NotificationButton from "./components/IconButtons/NotificationButton";
 import BackButton from "./components/IconButtons/BackButton";
 
 import mealService from "../app/services/mealService";
@@ -23,9 +21,26 @@ const AppContent = () => {
   const pathname = usePathname();
   const { user, loading } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
+  const [headerTitle, setHeaderTitle] = useState("Account");
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+  // Move useCallback to the top with other hooks
+  const getHeaderTitle = useCallback(() => {
+    return user ? `Hello! ${user.name}` : "Account";
+  }, [user]);
+
+  // Update header title when user changes
+  useEffect(() => {
+    if (user && user.name) {
+      setHeaderTitle(`Hello! ${user.name}`);
+    } else {
+      setHeaderTitle("Account");
+    }
+  }, [user]);
 
   console.log("AppContent: useAuth() returned:", { user, loading });
 
+  // Only redirect on initial load, not on subsequent auth state changes
   useEffect(() => {
     if (loading) {
       console.log("AppContent Effect: Still loading auth state...");
@@ -34,15 +49,17 @@ const AppContent = () => {
 
     console.log("AppContent Effect: Auth loading finished. User:", user);
 
-    if (user) {
-      if (pathname === "/") {
-        console.log(
-          "AppContent Effect: User found, redirecting from / to /meals"
-        );
-        router.replace("/(meals)");
-      }
+    // Only redirect if this is the initial load and we're on the home page
+    if (user && !initialLoadComplete && pathname === "/") {
+      console.log(
+        "AppContent Effect: Initial user load, redirecting from / to /meals"
+      );
+      router.replace("/(meals)");
     }
-  }, [user, loading, pathname, router]);
+
+    // Mark initial load as complete
+    setInitialLoadComplete(true);
+  }, [user, loading, pathname, router, initialLoadComplete]);
 
   const handleModalAddMeal = async (
     name,
@@ -75,7 +92,7 @@ const AppContent = () => {
     }
   };
 
-  if (loading) {
+  if (loading && !initialLoadComplete) {
     console.log("AppContent Render: Showing loading indicator");
     return (
       <View style={styles.centeredContainer}>
@@ -93,7 +110,6 @@ const AppContent = () => {
           headerTitleStyle: { fontSize: 20, fontWeight: "bold" },
           headerRight: () => (
             <View style={{ flexDirection: "row" }}>
-              {/* <NotificationButton /> */}
               <AccountButton />
             </View>
           ),
@@ -105,20 +121,15 @@ const AppContent = () => {
         <Stack.Screen
           name="(account)"
           options={{
-            title: user ? `Hello! ${user.name}` : "Account",
+            // Use the dynamic title that updates with user state
+            title: headerTitle,
           }}
         />
-        {/* <Stack.Screen name="chat" options={{ title: "Chat" }} /> */}
-        {/* <Stack.Screen
-          name="notifications"
-          options={{ title: "Notifications" }}
-        /> */}
       </Stack>
 
       {user && (
         <>
           <View style={styles.buttonContainer}>
-            {/* <ChatButton /> */}
             <TouchableOpacity
               style={styles.openModalButton}
               onPress={() => setModalVisible(true)}>
@@ -146,11 +157,11 @@ const RootLayout = () => {
 };
 
 const styles = StyleSheet.create({
-  // centeredContainer: {
-  //   flex: 1,
-  //   justifyContent: "center",
-  //   alignItems: "center",xw
-  // },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   buttonContainer: {
     position: "absolute",
     bottom: 20,
@@ -177,12 +188,6 @@ const styles = StyleSheet.create({
     fontSize: 30,
     fontWeight: "bold",
   },
-  // chatButton: {
-  //   marginBottom: 10,
-  // },
-  // backButton: {
-  //   marginLeft: 10,
-  // },
 });
 
 export default RootLayout;

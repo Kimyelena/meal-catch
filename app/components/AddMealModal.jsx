@@ -143,49 +143,26 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     try {
       setLoading(true);
 
-      let uploadedUrls = [];
-      if (imageUris.length > 0) {
-        const uploadResults = await imageService.uploadImagesAndGetUrls(
-          imageUris
-        ); // Call imageService
-        console.log("uploadResults:", uploadResults);
+      // We'll send the original image URIs directly to addMeal
+      // and let the services handle the upload process
+      console.log("Sending original image URIs:", originalImageUris);
 
-        if (uploadResults) {
-          uploadedUrls = uploadResults.filter((url) => url !== null);
-          if (uploadedUrls.length !== imageUris.length) {
-            Alert.alert(
-              "Error",
-              "Failed to upload all images. Some images may be missing."
-            );
-            setLoading(false);
-            return;
-          }
-        } else {
-          Alert.alert("Error", "Failed to upload images.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      console.log(
-        "Final uploadedUrls array:",
-        JSON.stringify(uploadedUrls, null, 2)
-      );
-
+      // FIXED: Swap the positions of selectedTags and selectedCategory
       await addMeal(
-        mealName,
-        description,
-        uploadedUrls,
-        originalImageUris, // Pass original URIs
-        selectedTags,
-        selectedCategory
+        mealName, // name
+        description, // description
+        originalImageUris, // imageUris - using original URIs
+        selectedTags, // tags
+        selectedCategory // category
       );
-      console.log("Original Image URIs before addMeal:", originalImageUris);
 
+      console.log("Meal added successfully");
+
+      // Reset form
       setMealName("");
       setDescription("");
       setImageUris([]);
-      setOriginalImageUris([]); // Clear original URIs
+      setOriginalImageUris([]);
       setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
@@ -236,7 +213,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.sectionTitle}>Offer Food</Text>
+          <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
@@ -271,7 +248,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder="What food are you offering?"
+            placeholder="Jake jidlo nabizete?"
             value={mealName}
             onChangeText={setMealName}
           />
@@ -281,7 +258,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
               styles.descriptionInput,
               { height: descriptionInputHeight },
             ]}
-            placeholder="Please describe what it is"
+            placeholder="Popis prosim, co to je :D"
             value={description}
             onChangeText={setDescription}
             multiline={true}
@@ -366,7 +343,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   addButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: "#01766A",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
