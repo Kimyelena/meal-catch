@@ -27,8 +27,10 @@ export const fetchMeals = async (
       console.error("fetchMeals - mealService error:", response.error);
       setError(response.error);
       Alert.alert("Error", response.error);
+      // Always set meals to empty array on error
+      setMeals([]);
     } else {
-      const fetchedMeals = response.data.documents;
+      const fetchedMeals = response.data.documents || [];
       console.log("fetchMeals - fetchedMeals:", fetchedMeals);
       setMeals(fetchedMeals);
       setError(null);
@@ -37,6 +39,8 @@ export const fetchMeals = async (
     console.error("fetchMeals - error:", error);
     setError("Failed to fetch meals.");
     Alert.alert("Error", "Failed to fetch meals.");
+    // Always set meals to empty array on exception
+    setMeals([]);
   }
   setLoading(false);
   console.log("fetchMeals - end");
