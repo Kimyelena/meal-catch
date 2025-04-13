@@ -3,15 +3,21 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
   Modal,
   Animated,
   Dimensions,
+  Clipboard,
+  ToastAndroid,
+  Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import authService from "../services/authService";
+import CachedImage from "./CachedImage";
+import { getOptimizedImageUri, preloadImages } from "../utils/imageUtils";
 
 const { height } = Dimensions.get("window");
 
@@ -19,9 +25,19 @@ const MealItemView = ({ meal, onClose, visible }) => {
   const modalAnimation = useRef(new Animated.Value(height)).current;
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
   const [mealDetails, setMealDetails] = useState({});
+  const [copyFeedback, setCopyFeedback] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Preload images when meal data changes
+  useEffect(() => {
+    if (meal && meal.imageUris && meal.imageUris.length > 0) {
+      preloadImages(meal.imageUris);
+    }
+  }, [meal]);
 
   useEffect(() => {
     if (visible && meal.user_id) {
+      setIsLoading(true);
       const fetchUserDetails = async () => {
         try {
           const userDetails = await authService.getUserDetails(meal.user_id);
@@ -33,6 +49,8 @@ const MealItemView = ({ meal, onClose, visible }) => {
           }
         } catch (error) {
           console.error("Error fetching user details:", error);
+        } finally {
+          setIsLoading(false);
         }
       };
       fetchUserDetails();
@@ -61,6 +79,106 @@ const MealItemView = ({ meal, onClose, visible }) => {
     setShowPhoneNumber(!showPhoneNumber);
   };
 
+  const copyToClipboard = () => {
+    if (mealDetails.ownerNumber) {
+      Clipboard.setString(mealDetails.ownerNumber);
+
+      // Show feedback that number was copied
+      setCopyFeedback(true);
+
+      // Provide feedback based on platform
+      if (Platform.OS === "android") {
+        ToastAndroid.show("Phone number copied!", ToastAndroid.SHORT);
+      } else {
+        // For iOS and other platforms
+        Alert.alert(
+          "Copied",
+          "Phone number copied to clipboard!",
+          [{ text: "OK", onPress: () => {} }],
+          { cancelable: true }
+        );
+      }
+
+      // Reset the feedback state after a brief delay
+      setTimeout(() => {
+        setCopyFeedback(false);
+      }, 2000);
+    }
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007bff" />
+          <Text style={styles.loadingText}>Loading meal details...</Text>
+        </View>
+      );
+    }
+
+    return (
+      <>
+        {/* Images first */}
+        <ScrollView horizontal={true} style={styles.imageScroll}>
+          {meal.imageUris &&
+            meal.imageUris.map((uri, index) => (
+              <CachedImage
+                key={index}
+                uri={getOptimizedImageUri(uri)}
+                style={styles.detailImage}
+              />
+            ))}
+        </ScrollView>
+
+        {/* User info second */}
+        <View style={styles.userInfoContainer}>
+          <Text style={styles.userNameText}>By: {mealDetails.ownerName}</Text>
+          <TouchableOpacity
+            onPress={handlePhonePress}
+            style={[
+              styles.contactButton,
+              showPhoneNumber && styles.phoneNumberButton,
+            ]}>
+            <View style={styles.phoneContainer}>
+              <MaterialIcons
+                name={showPhoneNumber ? "phone_enabled" : "phone"}
+                size={24}
+                color={showPhoneNumber ? "#4CAF50" : "#007bff"}
+              />
+              <Text
+                style={[
+                  styles.phoneText,
+                  !showPhoneNumber && styles.questionMarkText,
+                  showPhoneNumber && styles.phoneNumberActiveText,
+                ]}>
+                {showPhoneNumber ? mealDetails.ownerNumber : ""}
+              </Text>
+
+              {/* Copy button shown only when phone number is visible */}
+              {showPhoneNumber && (
+                <TouchableOpacity
+                  onPress={copyToClipboard}
+                  style={styles.copyButton}>
+                  <MaterialIcons
+                    name={copyFeedback ? "check" : "content-copy"}
+                    size={20}
+                    color={copyFeedback ? "#4CAF50" : "#007bff"}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Meal name third */}
+        <Text style={styles.modalTitle}>{meal.name}</Text>
+
+        {/* Description last */}
+        <Text style={styles.modalDescription}>{meal.description}</Text>
+      </>
+    );
+  };
+
   return (
     <Modal
       animationType="none"
@@ -73,36 +191,7 @@ const MealItemView = ({ meal, onClose, visible }) => {
       <View style={styles.modalOverlay}>
         <Animated.View
           style={[styles.modalContent, { height: modalAnimation }]}>
-          <Text style={styles.modalTitle}>{meal.name}</Text>
-
-          <ScrollView horizontal={true} style={styles.imageScroll}>
-            {meal.imageUris &&
-              meal.imageUris.map((uri, index) => (
-                <Image
-                  key={index}
-                  source={{ uri }}
-                  style={styles.detailImage}
-                />
-              ))}
-          </ScrollView>
-
-          <View style={styles.userInfoContainer}>
-            <Text style={styles.userNameText}>By: {mealDetails.ownerName}</Text>
-            <TouchableOpacity onPress={handlePhonePress}>
-              <View style={styles.phoneContainer}>
-                <MaterialIcons name="phone" size={24} color="#007bff" />
-                <Text style={styles.phoneText}>Contact</Text>
-              </View>
-            </TouchableOpacity>
-            {showPhoneNumber && (
-              <Text style={styles.phoneNumberText}>
-                {mealDetails.ownerNumber}
-              </Text>
-            )}
-          </View>
-
-          <Text style={styles.modalDescription}>{meal.description}</Text>
-
+          {renderContent()}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
@@ -134,13 +223,14 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     marginBottom: 10,
+    textAlign: "center",
   },
   imageScroll: {
     maxHeight: 200,
-    marginBottom: 10,
+    marginBottom: 15,
   },
   detailImage: {
     width: 200,
@@ -156,12 +246,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 10,
+    marginBottom: 15,
+    padding: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
   userNameText: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  contactButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 15,
+  },
+  phoneNumberButton: {
+    backgroundColor: "#e8f5e9", // light green background when showing number
+    borderWidth: 1,
+    borderColor: "#4CAF50",
   },
   phoneContainer: {
     flexDirection: "row",
@@ -171,6 +273,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#007bff",
     marginLeft: 5,
+    marginRight: 5,
+  },
+  phoneNumberActiveText: {
+    color: "#4CAF50", // green text for phone number
+    fontWeight: "bold",
+  },
+  questionMarkText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#888",
+  },
+  copyButton: {
+    padding: 5,
+    marginLeft: 2,
   },
   closeButton: {
     position: "absolute",
@@ -181,9 +297,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
-  phoneNumberText: {
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+  loadingText: {
     marginTop: 10,
-    fontWeight: "bold",
+    fontSize: 16,
+    color: "#666",
   },
 });
 
