@@ -52,26 +52,28 @@ const mealService = {
       user_id,
       name,
       description,
-      imageUris: Array.isArray(imageUris) ? `${imageUris.length} images` : imageUris,
+      imageUris: Array.isArray(imageUris)
+        ? `${imageUris.length} images`
+        : imageUris,
       tags,
       category,
     });
-    
+
     if (!dbId || !colId) {
       console.error("dbId or colId is undefined/empty");
       throw new Error("Missing Database or Collection ID configuration.");
     }
-    
+
     // Process images first - even if this fails, we'll still try to create the meal
     let uploadedImageUrls = [];
     try {
       if (imageUris && imageUris.length > 0) {
         // We'll process all images at once in the imageService
         const urls = await imageService.uploadImagesAndGetUrls(imageUris);
-        
+
         if (Array.isArray(urls)) {
           // Filter to ensure we only have strings
-          uploadedImageUrls = urls.filter(url => typeof url === 'string');
+          uploadedImageUrls = urls.filter((url) => typeof url === "string");
           console.log("Image upload successful, got URLs:", uploadedImageUrls);
         }
       }
@@ -79,7 +81,7 @@ const mealService = {
       console.error("Error uploading images:", imageError);
       // Continue with meal creation, but with empty image URLs
     }
-    
+
     try {
       const mealData = {
         name,
@@ -90,21 +92,21 @@ const mealService = {
         tags,
         category,
       };
-      
+
       console.log("Final meal data structure:", JSON.stringify(mealData));
-      
+
       const response = await databaseService.createDocument(
         dbId,
         colId,
         mealData,
         ID.unique()
       );
-      
+
       console.log("Meal created successfully:", response.$id);
-      return { 
-        data: response, 
+      return {
+        data: response,
         error: null,
-        imageUploadStatus: uploadedImageUrls.length > 0 ? 'success' : 'failed'
+        imageUploadStatus: uploadedImageUrls.length > 0 ? "success" : "failed",
       };
     } catch (error) {
       console.error("Error creating meal document:", error);
