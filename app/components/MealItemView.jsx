@@ -130,6 +130,24 @@ const MealItemView = ({ meal, onClose, visible }) => {
             ))}
         </ScrollView>
 
+        {/* Tags section */}
+        <View style={styles.tagsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tagScrollContent}>
+            {meal.tags && meal.tags.length > 0 ? (
+              meal.tags.map((tag, index) => (
+                <View key={index} style={styles.tagItem}>
+                  <Text style={styles.tagText}>{tag}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noTagsText}>No tags</Text>
+            )}
+          </ScrollView>
+        </View>
+
         {/* User info second */}
         <View style={styles.userInfoContainer}>
           <Text style={styles.userNameText}>By: {mealDetails.ownerName}</Text>
@@ -143,7 +161,7 @@ const MealItemView = ({ meal, onClose, visible }) => {
               <MaterialIcons
                 name={showPhoneNumber ? "phone_enabled" : "phone"}
                 size={24}
-                color={showPhoneNumber ? "#4CAF50" : "#007bff"}
+                color="#01766A" // Changed color for phone icon
               />
               <Text
                 style={[
@@ -162,7 +180,7 @@ const MealItemView = ({ meal, onClose, visible }) => {
                   <MaterialIcons
                     name={copyFeedback ? "check" : "content-copy"}
                     size={20}
-                    color={copyFeedback ? "#4CAF50" : "#007bff"}
+                    color={copyFeedback ? "#4CAF50" : "#01766A"} // Changed color for copy icon
                   />
                 </TouchableOpacity>
               )}
@@ -263,7 +281,7 @@ const styles = StyleSheet.create({
   phoneNumberButton: {
     backgroundColor: "#e8f5e9", // light green background when showing number
     borderWidth: 1,
-    borderColor: "#4CAF50",
+    borderColor: "#01766A", // Changed border color for consistency
   },
   phoneContainer: {
     flexDirection: "row",
@@ -276,7 +294,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   phoneNumberActiveText: {
-    color: "#4CAF50", // green text for phone number
+    color: "#01766A", // Changed text color for consistency
     fontWeight: "bold",
   },
   questionMarkText: {
@@ -307,6 +325,30 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: "#666",
+  },
+  tagsContainer: {
+    paddingHorizontal: 10,
+    marginTop: 5,
+    marginBottom: 8,
+  },
+  tagScrollContent: {
+    paddingVertical: 2,
+  },
+  tagItem: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginRight: 6,
+  },
+  tagText: {
+    fontSize: 12,
+    color: "#333",
+  },
+  noTagsText: {
+    fontSize: 12,
+    fontStyle: "italic",
+    color: "#999",
   },
 });
 

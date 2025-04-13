@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     position: "relative",
   },
   addButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: "#01766A",
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,

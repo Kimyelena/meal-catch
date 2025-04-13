@@ -138,20 +138,30 @@ const mealService = {
     }
   },
 
-  async updateMeal(id, name, description, imageUris) {
+  async updateMeal(id, name, description, imageUris, tags = []) {
     try {
-      const updatedData = {
-        name: name,
-        description: description,
-        imageUris: imageUris,
+      // Input validation
+      if (!name || name.trim() === "") {
+        return { error: "Meal name is required" };
+      }
+
+      // Prepare update data
+      const updateData = {
+        name,
+        description: description || "",
+        imageUris,
+        tags, // Include tags in the update
+        // updated_at: new Date().toISOString(),
       };
 
+      // Update the meal document
       const response = await databaseService.updateDocument(
         dbId,
         colId,
         id,
-        updatedData
+        updateData
       );
+
       return { data: response, error: null };
     } catch (error) {
       console.error("Error updating meal:", error);

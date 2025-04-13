@@ -24,6 +24,8 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
   const [editedName, setEditedName] = useState(meal.name);
   const [editedDescription, setEditedDescription] = useState(meal.description);
   const [editedImageUris, setEditedImageUris] = useState(meal.imageUris);
+  const [editedTags, setEditedTags] = useState(meal.tags || []);
+  const [newTag, setNewTag] = useState("");
   const modalAnimation = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(true);
 
@@ -54,7 +56,8 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
         meal.$id,
         editedName,
         editedDescription,
-        editedImageUris
+        editedImageUris,
+        editedTags
       );
       console.log("Update response:", response);
 
@@ -112,6 +115,17 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
     }
   };
 
+  const addTag = () => {
+    if (newTag.trim() !== "" && !editedTags.includes(newTag.trim())) {
+      setEditedTags([...editedTags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setEditedTags(editedTags.filter((tag) => tag !== tagToRemove));
+  };
+
   return (
     <Modal
       animationType="none"
@@ -145,6 +159,44 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
                     </View>
                   ))}
               </ScrollView>
+
+              {/* Tags section */}
+              <View style={styles.tagsContainer}>
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}>
+                  {editedTags.map((tag, index) => (
+                    <View key={index} style={styles.tagItem}>
+                      <Text style={styles.tagText}>{tag}</Text>
+                      {isEditing && (
+                        <TouchableOpacity
+                          onPress={() => removeTag(tag)}
+                          style={styles.tagDeleteButton}>
+                          <Text style={styles.tagDeleteButtonText}>×</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {isEditing && (
+                <View style={styles.addTagContainer}>
+                  <TextInput
+                    style={styles.tagInput}
+                    value={newTag}
+                    onChangeText={setNewTag}
+                    placeholder="Add a tag"
+                    onSubmitEditing={addTag}
+                    returnKeyType="done"
+                  />
+                  <TouchableOpacity
+                    onPress={addTag}
+                    style={styles.addTagButton}>
+                    <Text style={styles.addTagButtonText}>Add</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               {isEditing && <Button title="Add Image" onPress={pickImage} />}
 
@@ -309,6 +361,64 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
     paddingBottom: 5,
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginVertical: 10,
+  },
+  tagItem: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    marginRight: 8,
+    marginBottom: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  tagText: {
+    fontSize: 14,
+    color: "#333",
+  },
+  tagDeleteButton: {
+    marginLeft: 6,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: "#ccc",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  tagDeleteButtonText: {
+    fontSize: 12,
+    color: "#fff",
+    fontWeight: "bold",
+    lineHeight: 14,
+  },
+  addTagContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  tagInput: {
+    flex: 1,
+    height: 40,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginRight: 8,
+  },
+  addTagButton: {
+    backgroundColor: "#2196F3",
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 5,
+  },
+  addTagButtonText: {
+    color: "white",
+    fontWeight: "bold",
   },
 });
 

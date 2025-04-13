@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAuth } from "../contexts/AuthContext";
-import updateUserNameAndNumber from "../services/authService"; // Import updateUserNameAndNumber
+import updateUserNameAndNumber from "../services/authService";
 
 const UserInfoContainer = ({ onPhoneNumberSave }) => {
   const { user } = useAuth();
@@ -23,7 +23,6 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
     console.log("Phone number saved:", newPhoneNumber);
     console.log("phoneNumber state:", newPhoneNumber);
 
-    // Call handleUpdateUser to update the number in the database
     if (user && user.$id) {
       await handleUpdateUser(user.$id, user.name, newPhoneNumber);
     }
@@ -42,12 +41,14 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
   return (
     <View style={styles.container}>
       <View style={styles.phoneContainer}>
-        <MaterialIcons name="phone" size={24} color="#007bff" />
+        <MaterialIcons name="phone" size={24} color="#01766A" />
         <Text style={styles.phoneText}>
-          Phone: {phoneNumber ? phoneNumber : "Not Provided"}
+          {phoneNumber ? phoneNumber : "Not Provided"}
         </Text>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Text style={styles.editPhoneText}>Edit</Text>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.editIconButton}>
+          <MaterialIcons name="edit" size={20} color="#01766A" />
         </TouchableOpacity>
       </View>
 
@@ -58,6 +59,12 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
         onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>X</Text>
+            </TouchableOpacity>
+
             <Text style={styles.modalTitle}>Edit Phone Number</Text>
             <TextInput
               style={styles.modalInput}
@@ -66,18 +73,12 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
               keyboardType="phone-pad"
               placeholder="+420XXXXXXXXX"
             />
-            <View style={styles.modalButtonContainer}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
-                onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalSaveButton}
-                onPress={() => handleSavePhoneNumber(phoneNumber)}>
-                <Text style={styles.modalButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity
+              style={styles.modalSaveButton}
+              onPress={() => handleSavePhoneNumber(phoneNumber)}>
+              <Text style={styles.modalButtonText}>Save</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -104,12 +105,8 @@ const styles = StyleSheet.create({
   },
   phoneText: {
     fontSize: 16,
-    color: "#007bff",
+    color: "#01766A",
     marginLeft: 5,
-  },
-  editPhoneText: {
-    fontSize: 16,
-    color: "#007bff",
   },
   modalOverlay: {
     flex: 1,
@@ -122,41 +119,48 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
+    width: "80%",
+    position: "relative",
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
+    marginBottom: 20,
+    marginTop: 10,
   },
   modalInput: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 25,
     paddingHorizontal: 10,
-    width: "80%",
-  },
-  modalButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    marginTop: 10,
+    width: "90%",
+    borderRadius: 5,
   },
   modalSaveButton: {
-    backgroundColor: "#007bff",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    backgroundColor: "#01766A",
+    paddingVertical: 12,
+    paddingHorizontal: 30,
     borderRadius: 5,
-  },
-  modalCancelButton: {
-    backgroundColor: "gray",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    alignSelf: "center",
   },
   modalButtonText: {
     color: "white",
     fontSize: 16,
+    fontWeight: "bold",
+  },
+  editIconButton: {
+    padding: 5,
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 1,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 
