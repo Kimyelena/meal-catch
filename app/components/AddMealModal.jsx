@@ -143,48 +143,22 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     try {
       setLoading(true);
 
-      let uploadedUrls = [];
-      if (imageUris.length > 0) {
-        const uploadResults = await imageService.uploadImagesAndGetUrls(
-          imageUris
-        );
-        console.log("uploadResults:", uploadResults);
-
-        if (uploadResults) {
-          uploadedUrls = uploadResults.filter((url) => url !== null);
-          if (uploadedUrls.length !== imageUris.length) {
-            Alert.alert(
-              "Error",
-              "Failed to upload all images. Some images may be missing."
-            );
-            setLoading(false);
-            return;
-          }
-        } else {
-          Alert.alert("Error", "Failed to upload images.");
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Log all values for debugging
-      console.log("mealName (name):", mealName);
-      console.log("description:", description);
-      console.log("uploadedUrls (imageUris):", uploadedUrls);
-      console.log("selectedTags (should be tags):", selectedTags);
-      console.log("selectedCategory (should be category):", selectedCategory);
+      // We'll send the original image URIs directly to addMeal
+      // and let the services handle the upload process
+      console.log("Sending original image URIs:", originalImageUris);
 
       // FIXED: Swap the positions of selectedTags and selectedCategory
       await addMeal(
         mealName, // name
         description, // description
-        uploadedUrls, // imageUris
-        selectedTags, // tags - SWAPPED position
-        selectedCategory // category - SWAPPED position
+        originalImageUris, // imageUris - using original URIs
+        selectedTags, // tags
+        selectedCategory // category
       );
 
-      console.log("Meal added successfully with correct parameter order");
+      console.log("Meal added successfully");
 
+      // Reset form
       setMealName("");
       setDescription("");
       setImageUris([]);

@@ -1,26 +1,40 @@
 import { storage, config } from "./appwrite";
-import { ID } from "appwrite";
+import { ID } from "react-native-appwrite";
 
 const storageService = {
-  async uploadFile(fileId) {
-    //file parameter is now blob or file object.
+  async uploadFile(file) {
+    if (!file) {
+      console.error("No file provided to uploadFile");
+      return { error: "No file provided" };
+    }
+    
     try {
+      console.log("Uploading file to bucket:", config.bucketId);
+      const fileId = ID.unique();
+      
       const uploadedFile = await storage.createFile(
         config.bucketId,
-        ID.unique(),
-        fileId
+        fileId,
+        file
       );
+      
+      console.log("Upload successful, file ID:", uploadedFile.$id);
       return { data: uploadedFile.$id };
     } catch (error) {
+      console.error("Error in storageService.uploadFile:", error);
       return { error: error.message };
     }
   },
 
-  async getFileViewUrl(fileId) {
+  getFileViewUrl(fileId) {
+    if (!fileId) {
+      console.error("No fileId provided to getFileViewUrl");
+      return null;
+    }
+    
     try {
-      console.log("Get File View File ID:", fileId);
-      console.log("Get File View Bucket ID:", config.bucketId);
-      const fileUrl = storage.getFileView(fileId, config.bucketId);
+      // The correct order is bucketId first, then fileId
+      const fileUrl = storage.getFileView(config.bucketId, fileId);
       return fileUrl;
     } catch (error) {
       console.error("Error getting file view URL:", error);

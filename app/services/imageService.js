@@ -1,121 +1,93 @@
 import storageService from "./storageService";
 import { config } from "./appwrite";
-import RNFS from "react-native-fs";
+import * as FileSystem from 'expo-file-system';
 
 const imageService = {
   async uploadImagesAndGetUrls(imageUris) {
-    console.log("Bucket ID:", config.bucketId);
+    console.log("uploadImagesAndGetUrls received:", imageUris);
+    
     if (!config.bucketId) {
-      const errorMessage =
-        "Error: bucketId is not defined. Check your environment variables.";
-      console.error(errorMessage);
-      return Promise.reject(new Error(errorMessage));
+      console.error("Error: bucketId is not defined");
+      return [];
     }
 
-    if (!Array.isArray(imageUris) || imageUris.length === 0) {
-      console.warn("imageUris is empty or not an array. Skipping upload.");
-      return Promise.resolve([]);
+    // Handle both single URI string and array of URIs
+    const urisArray = Array.isArray(imageUris) ? imageUris : [imageUris];
+    
+    if (urisArray.length === 0) {
+      console.warn("No images to upload");
+      return [];
     }
 
-    try {
-      const uploadResults = await Promise.all(
-        imageUris.map(async (originalUri) => {
-          try {
-            console.log(`Uploading image: ${originalUri}`);
-            let blob;
-            let mimeType = "image/jpeg"; // Default, change as needed!
-
-            if (originalUri.startsWith("file://")) {
-              try {
-                const fileContent = await RNFS.readFile(originalUri, "base64");
-                // **DETERMINE THE CORRECT MIME TYPE HERE!**
-                // Example (very basic, unreliable):
-                if (originalUri.toLowerCase().endsWith(".png")) {
-                  mimeType = "image/png";
-                } else if (
-                  originalUri.toLowerCase().endsWith(".jpg") ||
-                  originalUri.toLowerCase().endsWith(".jpeg")
-                ) {
-                  mimeType = "image/jpeg";
-                }
-                const dataUri = `data:${mimeType};base64,${fileContent}`;
-                blob = await (await fetch(dataUri)).blob();
-                // blob = new Blob([fileContent], { type: mimeType });
-              } catch (readFileError) {
-                console.error(
-                  `Error reading file ${originalUri}:`,
-                  readFileError
-                );
-                throw new Error(`Could not read file: ${originalUri}`);
-              }
-            } else {
-              const response = await fetch(originalUri);
-              if (!response.ok) {
-                throw new Error(
-                  `HTTP error ${response.status} fetching ${originalUri}`
-                );
-              }
-              try {
-                blob = await response.blob();
-                mimeType = blob.type; // Use the type from the response
-              } catch (blobError) {
-                console.error(
-                  `Error creating blob from fetch for ${originalUri}:`,
-                  blobError
-                );
-                throw new Error(
-                  `Could not create blob from fetch: ${originalUri}`
-                );
-              }
-            }
-
-            console.log("Blob:", blob);
-            console.log("Blob Type:", mimeType);
-            console.log("Blob Size:", blob.size);
-
-            const uploadResult = await storageService.uploadFile(
-              blob,
-              config.bucketId
-            );
-
-            if (uploadResult.error) {
-              const uploadErrorMessage = `Upload failed for ${originalUri}: ${uploadResult.error}`;
-              console.error(uploadErrorMessage);
-              throw new Error(uploadErrorMessage);
-            }
-
-            const uploadedFileId = uploadResult.data;
-            console.log(`Uploaded file ID: ${uploadedFileId}`);
-
-            const imageUrl = await storageService.getFileViewUrl(
-              uploadedFileId,
-              config.bucketId
-            );
-
-            if (!imageUrl) {
-              const urlErrorMessage = `Failed to get file view URL for: ${originalUri}`;
-              console.error(urlErrorMessage);
-              throw new Error(urlErrorMessage);
-            }
-
-            console.log(`Generated URL: ${imageUrl}`);
-            return imageUrl;
-          } catch (processingError) {
-            console.error(
-              `Error processing image ${originalUri}:`,
-              processingError
-            );
-            return Promise.reject(processingError);
-          }
-        })
-      );
-
-      return uploadResults;
-    } catch (overallError) {
-      console.error("Error uploading images:", overallError);
-      return null;
+    const uploadedUrls = [];
+    
+    for (const uri of urisArray) {
+      if (!uri || typeof uri !== 'string') {
+        console.warn("Skipping invalid URI:", uri);
+        continue;
+      }
+      
+      try {
+        console.log("Processing image URI:", uri);
+        
+        // Get file info
+        const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          console.error("File does not exist:", uri);
+          continue;
+        }
+        
+        // Read the file as base64
+        const base64 = await FileSystem.readAsStringAsync(uri, {
+          encoding: FileSystem.EncodingType.Base64
+        });
+        
+        // Determine MIME type from URI extension
+        let mimeType = "image/jpeg"; // default
+        if (uri.toLowerCase().endsWith('.png')) mimeType = "image/png";
+        if (uri.toLowerCase().endsWith('.gif')) mimeType = "image/gif";
+        
+        // Create blob
+        const blob = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.onload = function() {
+            resolve(xhr.response);
+          };
+          xhr.onerror = function() {
+            reject(new Error('Failed to create blob'));
+          };
+          xhr.responseType = 'blob';
+          xhr.open('GET', `data:${mimeType};base64,${base64}`, true);
+          xhr.send(null);
+        });
+        
+        console.log("Created blob:", blob.size, "bytes,", "type:", blob.type);
+        
+        // Upload the blob
+        const result = await storageService.uploadFile(blob);
+        
+        if (result.error) {
+          console.error("Upload failed:", result.error);
+          continue;
+        }
+        
+        // Get the URL and add it to our results
+        const fileId = result.data;
+        const fileUrl = storageService.getFileViewUrl(fileId);
+        
+        if (fileUrl) {
+          console.log("Generated URL:", fileUrl);
+          uploadedUrls.push(fileUrl);
+        }
+      } catch (error) {
+        console.error("Error processing image:", error);
+        // Continue with next image
+      }
     }
-  },
+    
+    console.log("Final uploaded URLs:", uploadedUrls);
+    return uploadedUrls;
+  }
 };
 
 export default imageService;

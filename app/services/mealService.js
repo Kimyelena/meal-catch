@@ -52,76 +52,65 @@ const mealService = {
       user_id,
       name,
       description,
-      imageUris,
+      imageUris: Array.isArray(imageUris) ? `${imageUris.length} images` : imageUris,
       tags,
       category,
     });
-    console.log("Using dbId:", dbId, "| colId:", colId);
+    
     if (!dbId || !colId) {
-      console.error(
-        "dbId or colId is undefined/empty. Check .env and EXPO_PUBLIC_ prefix!"
-      );
+      console.error("dbId or colId is undefined/empty");
       throw new Error("Missing Database or Collection ID configuration.");
     }
-    if (
-      !databaseService ||
-      typeof databaseService.createDocument !== "function"
-    ) {
-      console.error(
-        "databaseService or databaseService.createDocument is invalid!"
-      );
-      throw new Error("Database service is not configured correctly.");
-    }
-    if (typeof ID?.unique !== "function") {
-      console.error("Appwrite ID.unique function is not available!");
-      throw new Error("Appwrite ID function missing.");
-    }
-    // --- End Checks ---
-
-    let data;
+    
+    // Process images first - even if this fails, we'll still try to create the meal
+    let uploadedImageUrls = [];
     try {
-      // 1. Upload Images and Get URLs
-      const uploadedImageUrls = [];
-      for (const uri of imageUris) {
-        const imageUrl = await imageService.uploadImagesAndGetUrls(
-          uri,
-          config.bucketId
-        );
-        if (imageUrl) {
-          uploadedImageUrls.push(imageUrl);
+      if (imageUris && imageUris.length > 0) {
+        // We'll process all images at once in the imageService
+        const urls = await imageService.uploadImagesAndGetUrls(imageUris);
+        
+        if (Array.isArray(urls)) {
+          // Filter to ensure we only have strings
+          uploadedImageUrls = urls.filter(url => typeof url === 'string');
+          console.log("Image upload successful, got URLs:", uploadedImageUrls);
         }
       }
-
-      data = {
-        name: name,
+    } catch (imageError) {
+      console.error("Error uploading images:", imageError);
+      // Continue with meal creation, but with empty image URLs
+    }
+    
+    try {
+      const mealData = {
+        name,
         createdAt: new Date().toISOString(),
-        user_id: user_id,
-        imageUris: uploadedImageUrls, // Use uploaded URLs
-        description: description,
-        tags: tags,
-        category: category,
+        user_id,
+        imageUris: uploadedImageUrls, // This will be a simple array of strings
+        description,
+        tags,
+        category,
       };
-      console.log("Constructed data object for Appwrite:", data);
-
-      console.log("Calling databaseService.createDocument...");
+      
+      console.log("Final meal data structure:", JSON.stringify(mealData));
+      
       const response = await databaseService.createDocument(
         dbId,
         colId,
-        data,
+        mealData,
         ID.unique()
       );
-      console.log("databaseService.createDocument SUCCEEDED:", response);
-      return { data: response, error: null };
+      
+      console.log("Meal created successfully:", response.$id);
+      return { 
+        data: response, 
+        error: null,
+        imageUploadStatus: uploadedImageUrls.length > 0 ? 'success' : 'failed'
+      };
     } catch (error) {
-      console.error("!!! CATCH block inside mealService.addMeal reached !!!");
-      console.error(
-        "Error occurred AFTER data construction, likely during DB call."
-      );
-      console.error("Data object at time of error:", data);
-      console.error("Full error details:", error);
+      console.error("Error creating meal document:", error);
       return {
         data: null,
-        error: error.message || "Failed to save meal to database.",
+        error: error.message || "Failed to save meal to database",
       };
     }
   },
