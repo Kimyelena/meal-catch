@@ -57,24 +57,35 @@ const authService = {
     }
   },
   // Get logged in user
-  async getUser() {
+  async getUser(forceRefresh = false) {
     try {
       const userAccount = await account.get();
       if (!userAccount) {
         return null;
       }
 
+      // Added logging for debugging
+      console.log("Got user account:", userAccount.$id);
+
+      // Always fetch the latest user data from the database
       const documents = await databases.listDocuments(dbId, colId, [
         Query.equal("user_id", userAccount.$id),
       ]);
 
+      console.log("Fetched user documents count:", documents.documents.length);
+      
       if (documents.total > 0 && documents.documents.length > 0) {
+        const userDoc = documents.documents[0];
+        console.log("User document found with phone:", userDoc.number);
+        
+        // Create a new user object with all account properties plus the number
         return {
           ...userAccount,
-          number: documents.documents[0].number, // Include number here
+          number: userDoc.number,
         };
       } else {
-        return userAccount; // Or handle as needed
+        console.log("No user document found, returning just account data");
+        return userAccount;
       }
     } catch (error) {
       console.error("Error getting user:", error);
@@ -133,11 +144,28 @@ const authService = {
 
       console.log("Update data:", updateData);
 
-      // Use the consistent environment variables
+      // First, find the document with user_id equal to userId
+      const userDocs = await databases.listDocuments(dbId, colId, [
+        Query.equal("user_id", userId),
+      ]);
+      
+      let docId;
+      if (userDocs.total > 0) {
+        docId = userDocs.documents[0].$id;
+        console.log("Found user document ID:", docId);
+      } else {
+        console.error("No user document found with user_id:", userId);
+        return {
+          success: false,
+          error: "User document not found",
+        };
+      }
+
+      // Update the user document using the document ID
       const updatedDocument = await databases.updateDocument(
         dbId,
         colId,
-        userId,
+        docId,
         updateData
       );
 

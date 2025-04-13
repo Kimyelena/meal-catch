@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,31 +6,53 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  Alert,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAuth } from "../contexts/AuthContext";
-import authService from "../services/authService"; // Fix import to get the entire service
+import authService from "../services/authService";
 
 const UserInfoContainer = ({ onPhoneNumberSave }) => {
   const { user, refreshUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(user?.number || null);
 
+  // Add this effect to update state when user prop changes
+  useEffect(() => {
+    console.log("User changed, updating phone number state:", user?.number);
+    if (user?.number !== undefined) {
+      setPhoneNumber(user.number);
+    }
+  }, [user]);
+
   const handleSavePhoneNumber = async (newPhoneNumber) => {
-    onPhoneNumberSave(newPhoneNumber);
-    setPhoneNumber(newPhoneNumber);
-    setModalVisible(false);
-    console.log("Phone number saved:", newPhoneNumber);
-    console.log("phoneNumber state:", newPhoneNumber);
+    try {
+      if (user && user.$id) {
+        console.log("Saving phone number:", newPhoneNumber);
+        setModalVisible(false);
 
-    if (user && user.$id) {
-      await handleUpdateUser(user.$id, user.name, newPhoneNumber);
+        // First update the database
+        const updateResult = await handleUpdateUser(user.$id, user.name, newPhoneNumber);
 
-      // Add a small delay before refreshing to ensure database update completes
-      setTimeout(async () => {
-        await refreshUser();
-        console.log("User refreshed after update");
-      }, 500);
+        if (updateResult.success) {
+          // If database update succeeds, update local state and force a refresh
+          setPhoneNumber(newPhoneNumber); // Update local state immediately
+          onPhoneNumberSave(newPhoneNumber);
+
+          console.log("Database update successful, refreshing user data...");
+
+          // Force refresh with some delay to ensure DB has updated
+          setTimeout(async () => {
+            await refreshUser();
+            console.log("User data refreshed");
+          }, 1000);
+        } else {
+          Alert.alert("Error", "Failed to update phone number. Please try again.");
+        }
+      }
+    } catch (error) {
+      console.error("Error saving phone number:", error);
+      Alert.alert("Error", "An unexpected error occurred. Please try again.");
     }
   };
 
@@ -43,10 +65,12 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
     );
 
     if (result.success) {
-      console.log("User updated:", result.updatedDocument);
+      console.log("User updated in database:", result.updatedDocument);
     } else {
-      console.error("Failed to update user:", result.error);
+      console.error("Failed to update user in database:", result.error);
     }
+
+    return result;
   }
 
   return (
