@@ -13,6 +13,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import authService from "../services/authService";
@@ -27,32 +28,45 @@ const MealItemView = ({ meal, onClose, visible }) => {
   const [mealDetails, setMealDetails] = useState({});
   const [copyFeedback, setCopyFeedback] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Preload images when meal data changes
+  // Add debugging for image URIs
   useEffect(() => {
     if (meal && meal.imageUris && meal.imageUris.length > 0) {
+      console.log("Meal ID:", meal.id, "Images:", meal.imageUris);
+      console.log("Image count:", meal.imageUris.length);
+
+      // Log each image URL separately for clarity
+      meal.imageUris.forEach((uri, i) => {
+        console.log(`Image ${i}: ${uri}`);
+      });
+
       preloadImages(meal.imageUris);
     }
   }, [meal]);
 
+  const fetchUserDetails = async () => {
+    if (!meal.user_id) return;
+
+    try {
+      setIsLoading(true);
+      const userDetails = await authService.getUserDetails(meal.user_id);
+      if (userDetails) {
+        setMealDetails({
+          ownerName: userDetails.name,
+          ownerNumber: userDetails.number,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user details:", error);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false); // End refreshing state
+    }
+  };
+
   useEffect(() => {
     if (visible && meal.user_id) {
-      setIsLoading(true);
-      const fetchUserDetails = async () => {
-        try {
-          const userDetails = await authService.getUserDetails(meal.user_id);
-          if (userDetails) {
-            setMealDetails({
-              ownerName: userDetails.name,
-              ownerNumber: userDetails.number,
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching user details:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
       fetchUserDetails();
     } else {
       setMealDetails({});
@@ -106,8 +120,24 @@ const MealItemView = ({ meal, onClose, visible }) => {
     }
   };
 
+  const onRefresh = async () => {
+    console.log("Refreshing meal details...");
+    setRefreshing(true);
+
+    // Clear image cache by adding new timestamp
+    if (meal.imageUris && meal.imageUris.length > 0) {
+      console.log("Refreshing images...");
+      preloadImages(
+        meal.imageUris.map((uri) => `${uri}?refresh=${Date.now()}`)
+      );
+    }
+
+    // Re-fetch user details
+    await fetchUserDetails();
+  };
+
   const renderContent = () => {
-    if (isLoading) {
+    if (isLoading && !refreshing) {
       return (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007bff" />
@@ -117,17 +147,40 @@ const MealItemView = ({ meal, onClose, visible }) => {
     }
 
     return (
-      <>
+      <ScrollView
+        style={styles.contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#007bff", "#01766A"]}
+            tintColor="#007bff"
+            title="Pull to refresh..."
+            titleColor="#999"
+          />
+        }>
         {/* Images first */}
-        <ScrollView horizontal={true} style={styles.imageScroll}>
+        <ScrollView
+          horizontal={true}
+          style={styles.imageScroll}
+          showsHorizontalScrollIndicator={false}>
           {meal.imageUris &&
-            meal.imageUris.map((uri, index) => (
-              <CachedImage
-                key={index}
-                uri={getOptimizedImageUri(uri)}
-                style={styles.detailImage}
-              />
-            ))}
+            meal.imageUris.map((uri, index) => {
+              // Add timestamp but avoid complex query parameters that might cause issues
+              // Use a simpler cache busting strategy
+              const cacheBustUri = `${uri}${
+                uri.includes("?") ? "&" : "?"
+              }t=${Date.now()}`;
+              console.log(`Rendering image ${index}:`, cacheBustUri);
+              return (
+                <CachedImage
+                  key={`meal-${meal.id || "unknown"}-image-${index}`}
+                  uri={cacheBustUri}
+                  style={styles.detailImage}
+                  resizeMode="cover"
+                />
+              );
+            })}
         </ScrollView>
 
         {/* Tags section */}
@@ -193,7 +246,7 @@ const MealItemView = ({ meal, onClose, visible }) => {
 
         {/* Description last */}
         <Text style={styles.modalDescription}>{meal.description}</Text>
-      </>
+      </ScrollView>
     );
   };
 
@@ -349,6 +402,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: "italic",
     color: "#999",
+  },
+  contentContainer: {
+    flex: 1,
   },
 });
 

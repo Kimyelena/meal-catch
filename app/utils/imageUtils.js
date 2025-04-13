@@ -1,4 +1,4 @@
-import { Platform, Image } from 'react-native';
+import { Platform, Image } from "react-native";
 
 // Create a safe version of image manipulator functions
 let ImageManipulator = null;
@@ -7,12 +7,15 @@ let canManipulate = false;
 // Try to import ImageManipulator safely
 try {
   // Only attempt to import if we're not in a web environment where it might not be supported
-  if (Platform.OS !== 'web') {
-    ImageManipulator = require('expo-image-manipulator');
+  if (Platform.OS !== "web") {
+    ImageManipulator = require("expo-image-manipulator");
     canManipulate = true;
   }
 } catch (err) {
-  console.warn('expo-image-manipulator not available, image optimization disabled', err);
+  console.warn(
+    "expo-image-manipulator not available, image optimization disabled",
+    err
+  );
   canManipulate = false;
 }
 
@@ -20,10 +23,10 @@ try {
 export const optimizeImage = async (uri) => {
   // If ImageManipulator is not available, return the original URI
   if (!canManipulate || !ImageManipulator) {
-    console.log('Image optimization skipped - manipulator not available');
+    console.log("Image optimization skipped - manipulator not available");
     return uri;
   }
-  
+
   try {
     const result = await ImageManipulator.manipulateAsync(
       uri,
@@ -32,43 +35,39 @@ export const optimizeImage = async (uri) => {
     );
     return result.uri;
   } catch (error) {
-    console.error('Error optimizing image:', error);
+    console.error("Error optimizing image:", error);
     return uri; // Return original uri if optimization fails
   }
 };
 
-// Get optimized image URI based on device/dimensions
+// Optimize image URIs for display, adding cache busting if needed
 export const getOptimizedImageUri = (uri) => {
   if (!uri) return null;
-  // Logic to add any transformations needed for display
+
+  // Always return the original URI without modification
+  // We'll add cache busting parameters later when rendering
   return uri;
 };
 
-// Preload images to avoid flicker
-export const preloadImages = async (uris) => {
-  if (!uris || !Array.isArray(uris)) return;
-  
-  try {
-    // Pre-fetch images on web platforms
-    if (Platform.OS === 'web') {
-      uris.forEach(uri => {
-        if (uri) {
-          const img = new Image();
-          img.src = uri;
-        }
+// Preload images to improve display performance
+export const preloadImages = (imageUris) => {
+  if (!imageUris || !imageUris.length) return;
+
+  console.log(`Preloading ${imageUris.length} images`);
+
+  imageUris.forEach((uri, index) => {
+    // Add unique timestamp for each prefetch
+    const optimizedUri = `${uri}?prefetch=true&index=${index}&t=${Date.now()}`;
+    console.log(
+      `Preloading image ${index + 1}/${imageUris.length}: ${optimizedUri}`
+    );
+
+    if (optimizedUri) {
+      Image.prefetch(optimizedUri).catch((error) => {
+        console.warn(`Failed to preload image ${index}: ${error}`);
       });
-    } else {
-      // Use Image.prefetch on native platforms
-      await Promise.all(
-        uris.map(uri => {
-          if (uri) return Image.prefetch(uri);
-          return Promise.resolve();
-        })
-      );
     }
-  } catch (error) {
-    console.error('Error preloading images:', error);
-  }
+  });
 };
 
 // Bundle functions into a default export
@@ -76,7 +75,7 @@ const imageUtils = {
   optimizeImage,
   getOptimizedImageUri,
   preloadImages,
-  isOptimizationAvailable: canManipulate
+  isOptimizationAvailable: canManipulate,
 };
 
 export default imageUtils;
