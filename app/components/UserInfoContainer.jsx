@@ -9,10 +9,10 @@ import {
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAuth } from "../contexts/AuthContext";
-import updateUserNameAndNumber from "../services/authService";
+import authService from "../services/authService"; // Fix import to get the entire service
 
 const UserInfoContainer = ({ onPhoneNumberSave }) => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(user?.number || null);
 
@@ -25,11 +25,22 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
 
     if (user && user.$id) {
       await handleUpdateUser(user.$id, user.name, newPhoneNumber);
+
+      // Add a small delay before refreshing to ensure database update completes
+      setTimeout(async () => {
+        await refreshUser();
+        console.log("User refreshed after update");
+      }, 500);
     }
   };
 
   async function handleUpdateUser(userId, newName, newNumber) {
-    const result = await updateUserNameAndNumber(userId, newName, newNumber);
+    // Use the correct method from authService
+    const result = await authService.updateUserNameAndNumber(
+      userId,
+      newName,
+      newNumber
+    );
 
     if (result.success) {
       console.log("User updated:", result.updatedDocument);

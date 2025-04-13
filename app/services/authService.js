@@ -112,54 +112,49 @@ const authService = {
       return null;
     }
   },
-};
 
-async function updateUserNameAndNumber(userId, newName, newNumber) {
-  try {
-    console.log(
-      "Updating user:",
-      userId,
-      "name:",
-      newName,
-      "number:",
-      newNumber
-    );
-    const documents = await databases.listDocuments(dbId, colId, [
-      Query.equal("user_id", userId),
-    ]);
-    if (documents.total > 0 && documents.documents.length > 0) {
-      const documentId = documents.documents[0].$id;
-      console.log("Found document ID:", documentId);
+  async updateUserNameAndNumber(userId, name, number) {
+    try {
+      console.log("Updating user:", { userId, name, number });
+
+      if (!userId) {
+        console.error("User ID is missing for update operation");
+        return {
+          success: false,
+          error: "User ID is required",
+        };
+      }
+
+      // Prepare the update data
       const updateData = {
-        name: newName,
-        number: String(newNumber),
+        name: name || "",
+        number: number || "",
       };
+
       console.log("Update data:", updateData);
+
+      // Use the consistent environment variables
       const updatedDocument = await databases.updateDocument(
         dbId,
         colId,
-        documentId,
+        userId,
         updateData
       );
-      console.log("updateDocument result:", updatedDocument);
-      if (updatedDocument && updatedDocument.$id) {
-        console.log("Update successful:", updatedDocument);
-        return { success: true, updatedDocument };
-      } else if (updatedDocument && updatedDocument.error) {
-        console.error("Update failed:", updatedDocument.error);
-        return { success: false, error: updatedDocument.error };
-      } else {
-        console.error("Update failed: Unknown reason");
-        return { success: false, error: "Database update failed" };
-      }
-    } else {
-      console.log("User not found:", userId);
-      return { success: false, error: "User not found" };
+
+      console.log("User updated successfully:", updatedDocument);
+
+      return {
+        success: true,
+        updatedDocument,
+      };
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return {
+        success: false,
+        error: error.message || "Failed to update user",
+      };
     }
-  } catch (error) {
-    console.error("Database update error:", error);
-    return { success: false, error: error.message };
-  }
-}
+  },
+};
 
 export default authService;
