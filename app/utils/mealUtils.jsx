@@ -20,7 +20,7 @@ export const fetchMeals = async (
     } else {
       console.log("fetchMeals - calling getMeals");
       response = await mealService.getMeals();
-      console.log("fetchMeals - getMeals response:", response);
+      console.log("fetchMeals - getMeals response from mealUtils:", response);
     }
 
     if (response.error) {
@@ -28,7 +28,7 @@ export const fetchMeals = async (
       setError(response.error);
       Alert.alert("Error", response.error);
     } else {
-      const fetchedMeals = response.data.data;
+      const fetchedMeals = response.data.documents;
       console.log("fetchMeals - fetchedMeals:", fetchedMeals);
       setMeals(fetchedMeals);
       setError(null);

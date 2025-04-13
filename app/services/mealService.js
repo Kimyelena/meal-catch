@@ -13,7 +13,7 @@ const mealService = {
 
       const response = await databaseService.listDocuments(dbId, colId, []);
 
-      console.log("getAllMeals - response:", response);
+      console.log("this is getAllMeals from mealService - response:", response);
 
       return { data: response, error: null };
     } catch (error) {
@@ -71,17 +71,25 @@ const mealService = {
         console.log(`Attempting to upload ${imageUris.length} images...`);
 
         // Direct call to imageService
-        const uploadResults = await imageService.uploadImagesAndGetUrls(imageUris);
-        console.log("Direct uploadResults received:", 
-          Array.isArray(uploadResults) ? JSON.stringify(uploadResults) : uploadResults);
-        
+        const uploadResults = await imageService.uploadImagesAndGetUrls(
+          imageUris
+        );
+        console.log(
+          "Direct uploadResults received:",
+          Array.isArray(uploadResults)
+            ? JSON.stringify(uploadResults)
+            : uploadResults
+        );
+
         if (Array.isArray(uploadResults)) {
           // Accept any non-empty string URLs
           uploadedImageUrls = uploadResults
-            .map(url => String(url))
-            .filter(url => url && url.length > 0 && url.includes("://"));
-          
-          console.log(`Filtered ${uploadResults.length} results to ${uploadedImageUrls.length} URLs`);
+            .map((url) => String(url))
+            .filter((url) => url && url.length > 0 && url.includes("://"));
+
+          console.log(
+            `Filtered ${uploadResults.length} results to ${uploadedImageUrls.length} URLs`
+          );
         } else {
           console.warn("Upload results is not an array:", uploadResults);
         }
