@@ -1,96 +1,70 @@
-import storageService from "./storageService";
-import { config } from "./appwrite";
-import * as FileSystem from "expo-file-system";
+import storageService from './storageService';
+import { Platform } from 'react-native';
+import * as FileSystem from 'expo-file-system';
+import { config } from './appwrite';
 
 const imageService = {
+  /**
+   * Uploads multiple images and returns their URLs
+   * @param {Array} imageUris - Array of image URIs to upload
+   * @returns {Promise<Array>} - Promise with array of uploaded image URLs
+   */
   async uploadImagesAndGetUrls(imageUris) {
-    console.log(
-      "uploadImagesAndGetUrls received:",
-      Array.isArray(imageUris) ? `${imageUris.length} images` : imageUris
-    );
-
-    if (!config.bucketId) {
-      console.error("Error: bucketId is not defined");
+    if (!imageUris || imageUris.length === 0) {
+      console.log("No images to upload");
       return [];
     }
 
-    // Handle both single URI string and array of URIs
-    const urisArray = Array.isArray(imageUris) ? imageUris : [imageUris];
+    console.log(`uploadImagesAndGetUrls received: ${imageUris.length} images`);
 
-    if (urisArray.length === 0) {
-      console.warn("No images to upload");
-      return [];
+    // Check if configuration is available
+    if (!config || !config.bucketId) {
+      console.error("Storage bucket ID is not configured properly");
+      throw new Error('Storage bucket ID is not configured. Check your appwrite.js configuration.');
     }
 
-    const uploadedUrls = [];
+    try {
+      const uploadPromises = imageUris.map(async (uri) => {
+        // Handle different URI formats based on platform
+        let fileUri = uri;
+        if (uri.startsWith('file://') && Platform.OS === 'ios') {
+          fileUri = uri.replace('file://', '');
+        }
 
-    for (const uri of urisArray) {
-      if (!uri || typeof uri !== "string") {
-        console.warn("Skipping invalid URI:", uri);
-        continue;
-      }
+        console.log(`Processing image: ${fileUri}`);
 
-      try {
-        console.log("Processing image URI:", uri);
-
-        // Verify the file exists
         try {
-          const fileInfo = await FileSystem.getInfoAsync(uri);
-          if (!fileInfo.exists) {
-            console.error("File does not exist:", uri);
-            continue;
+          // Upload the file using storageService
+          const uploadResult = await storageService.uploadFile(fileUri);
+          
+          if (!uploadResult || !uploadResult.data) {
+            console.error("Upload failed, no result data returned");
+            return null;
           }
-        } catch (fileCheckError) {
-          console.error("Error checking file:", fileCheckError);
-          continue;
-        }
-
-        // Create a file object with necessary metadata
-        const fileExt = uri.split(".").pop()?.toLowerCase() || "jpg";
-        const mimeType =
-          fileExt === "png"
-            ? "image/png"
-            : fileExt === "gif"
-            ? "image/gif"
-            : "image/jpeg";
-
-        const fileObject = {
-          uri: uri,
-          name: `image-${Date.now()}.${fileExt}`,
-          type: mimeType,
-        };
-
-        console.log("Sending file object to storage service:", fileObject.name);
-
-        // Upload the file
-        const result = await storageService.uploadFile(fileObject);
-
-        if (result.error) {
-          console.error("Upload failed:", result.error);
-          continue;
-        }
-
-        // Get the URL from the file ID
-        if (result.data) {
-          const fileId = result.data;
+          
+          // Get the file view URL
+          const fileId = uploadResult.data;
           const fileUrl = storageService.getFileViewUrl(fileId);
-
-          if (fileUrl) {
-            console.log("Generated URL:", fileUrl);
-            uploadedUrls.push(fileUrl);
-          }
+          
+          console.log(`Successfully uploaded image. File ID: ${fileId}, URL: ${fileUrl}`);
+          return fileUrl;
+        } catch (error) {
+          console.error(`Error uploading individual image: ${error.message}`);
+          return null;
         }
-      } catch (error) {
-        console.error("Error processing image:", error);
-        // Continue with next image
-      }
+      });
+
+      // Wait for all uploads to complete and filter out failed uploads
+      const results = await Promise.all(uploadPromises);
+      const validUrls = results.filter(url => url !== null);
+      
+      console.log(`Successfully uploaded ${validUrls.length} of ${imageUris.length} images`);
+      return validUrls;
+    } catch (error) {
+      console.error("Error in uploadImagesAndGetUrls:", error);
+      throw error;
     }
-
-    console.log(`Final uploaded URLs count: ${uploadedUrls.length}`);
-    console.log("Final URLs:", JSON.stringify(uploadedUrls));
-
-    return uploadedUrls;
-  },
+  }
 };
 
 export default imageService;
