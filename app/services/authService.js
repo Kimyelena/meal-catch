@@ -73,15 +73,17 @@ const authService = {
       ]);
 
       console.log("Fetched user documents count:", documents.documents.length);
-      
+
       if (documents.total > 0 && documents.documents.length > 0) {
         const userDoc = documents.documents[0];
         console.log("User document found with phone:", userDoc.number);
-        
-        // Create a new user object with all account properties plus the number
+        console.log("User document found with name:", userDoc.name);
+
+        // Create a new user object with all account properties plus the number and name
         return {
           ...userAccount,
           number: userDoc.number,
+          name: userDoc.name, // Add this line to include the updated name from DB
         };
       } else {
         console.log("No user document found, returning just account data");
@@ -148,7 +150,7 @@ const authService = {
       const userDocs = await databases.listDocuments(dbId, colId, [
         Query.equal("user_id", userId),
       ]);
-      
+
       let docId;
       if (userDocs.total > 0) {
         docId = userDocs.documents[0].$id;

@@ -7,6 +7,7 @@ import {
   Modal,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { useAuth } from "../contexts/AuthContext";
@@ -16,48 +17,67 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
   const { user, refreshUser } = useAuth();
   const [modalVisible, setModalVisible] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState(user?.number || null);
+  const [userName, setUserName] = useState(user?.name || "");
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Add this effect to update state when user prop changes
+  // Update state when user prop changes
   useEffect(() => {
-    console.log("User changed, updating phone number state:", user?.number);
+    console.log("User changed, updating user info state");
     if (user?.number !== undefined) {
       setPhoneNumber(user.number);
     }
+    if (user?.name !== undefined) {
+      setUserName(user.name);
+    }
   }, [user]);
 
-  const handleSavePhoneNumber = async (newPhoneNumber) => {
+  const handleSaveUserInfo = async (newPhoneNumber, newUserName) => {
     try {
       if (user && user.$id) {
-        console.log("Saving phone number:", newPhoneNumber);
+        setIsUpdating(true); // Show local loading indicator
+        console.log("Saving user info:", {
+          name: newUserName,
+          phone: newPhoneNumber,
+        });
         setModalVisible(false);
 
-        // First update the database
-        const updateResult = await handleUpdateUser(user.$id, user.name, newPhoneNumber);
+        // Update the database
+        const updateResult = await handleUpdateUser(
+          user.$id,
+          newUserName,
+          newPhoneNumber
+        );
 
         if (updateResult.success) {
-          // If database update succeeds, update local state and force a refresh
-          setPhoneNumber(newPhoneNumber); // Update local state immediately
+          // Update local state immediately
+          setPhoneNumber(newPhoneNumber);
+          setUserName(newUserName);
           onPhoneNumberSave(newPhoneNumber);
 
           console.log("Database update successful, refreshing user data...");
 
-          // Force refresh with some delay to ensure DB has updated
+          // Use silent refresh to avoid global loading state
           setTimeout(async () => {
-            await refreshUser();
+            await refreshUser(true); // Pass true for silent refresh
             console.log("User data refreshed");
+            setIsUpdating(false); // Hide local loading indicator
           }, 1000);
         } else {
-          Alert.alert("Error", "Failed to update phone number. Please try again.");
+          Alert.alert(
+            "Error",
+            "Failed to update user information. Please try again."
+          );
+          setIsUpdating(false);
         }
       }
     } catch (error) {
-      console.error("Error saving phone number:", error);
+      console.error("Error saving user info:", error);
       Alert.alert("Error", "An unexpected error occurred. Please try again.");
+      setIsUpdating(false);
     }
   };
 
   async function handleUpdateUser(userId, newName, newNumber) {
-    // Use the correct method from authService
     const result = await authService.updateUserNameAndNumber(
       userId,
       newName,
@@ -75,9 +95,21 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.phoneContainer}>
+      {/* Name Container
+      <View style={styles.infoRow}>
+        <MaterialIcons name="person" size={24} color="#01766A" />
+        <Text style={styles.infoText}>{userName || "Not Provided"}</Text>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.editIconButton}>
+          <MaterialIcons name="edit" size={20} color="#01766A" />
+        </TouchableOpacity>
+      </View> */}
+
+      {/* Phone Container */}
+      <View style={[styles.infoRow]}>
         <MaterialIcons name="phone" size={24} color="#01766A" />
-        <Text style={styles.phoneText}>
+        <Text style={styles.infoText}>
           {phoneNumber ? phoneNumber : "Not Provided"}
         </Text>
         <TouchableOpacity
@@ -86,7 +118,14 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
           <MaterialIcons name="edit" size={20} color="#01766A" />
         </TouchableOpacity>
       </View>
-
+      {/* Show loading indicator when updating */}
+      {isUpdating && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#01766A" />
+          <Text style={styles.loadingText}>Updating profile...</Text>
+        </View>
+      )}
+      {/* Edit Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -100,18 +139,34 @@ const UserInfoContainer = ({ onPhoneNumberSave }) => {
               <Text style={styles.closeButtonText}>X</Text>
             </TouchableOpacity>
 
-            <Text style={styles.modalTitle}>Edit Phone Number</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={phoneNumber || ""}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              placeholder="+420XXXXXXXXX"
-            />
+            <Text style={styles.modalTitle}>Edit User Information</Text>
+
+            {/* Name Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Name</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={userName || ""}
+                onChangeText={setUserName}
+                placeholder="Your name"
+              />
+            </View>
+
+            {/* Phone Input */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.inputLabel}>Phone Number</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={phoneNumber || ""}
+                onChangeText={setPhoneNumber}
+                keyboardType="phone-pad"
+                placeholder="+420XXXXXXXXX"
+              />
+            </View>
 
             <TouchableOpacity
               style={styles.modalSaveButton}
-              onPress={() => handleSavePhoneNumber(phoneNumber)}>
+              onPress={() => handleSaveUserInfo(phoneNumber, userName)}>
               <Text style={styles.modalButtonText}>Save</Text>
             </TouchableOpacity>
           </View>
@@ -128,20 +183,20 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 10,
   },
-  errorText: {
-    color: "red",
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  phoneContainer: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  phoneText: {
+
+  infoText: {
     fontSize: 16,
     color: "#01766A",
     marginLeft: 5,
+    flex: 1,
+  },
+  editIconButton: {
+    padding: 5,
   },
   modalOverlay: {
     flex: 1,
@@ -153,7 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     padding: 20,
     borderRadius: 10,
-    alignItems: "center",
+    alignItems: "stretch",
     width: "80%",
     position: "relative",
   },
@@ -162,14 +217,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 20,
     marginTop: 10,
+    textAlign: "center",
+  },
+  inputContainer: {
+    marginBottom: 15,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: "#333",
+    marginBottom: 5,
+    fontWeight: "500",
   },
   modalInput: {
     height: 40,
     borderColor: "gray",
     borderWidth: 1,
-    marginBottom: 25,
     paddingHorizontal: 10,
-    width: "90%",
+    width: "100%",
     borderRadius: 5,
   },
   modalSaveButton: {
@@ -178,14 +242,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     borderRadius: 5,
     alignSelf: "center",
+    marginTop: 10,
   },
   modalButtonText: {
     color: "white",
     fontSize: 16,
     fontWeight: "bold",
-  },
-  editIconButton: {
-    padding: 5,
   },
   closeButton: {
     position: "absolute",
@@ -196,6 +258,20 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 16,
     fontWeight: "bold",
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 8,
+    marginTop: 10,
+    backgroundColor: "#e8f5e9",
+    borderRadius: 5,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: "#01766A",
   },
 });
 

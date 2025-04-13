@@ -1,56 +1,82 @@
-import { Platform } from "react-native";
+import { Platform, Image } from 'react-native';
 
-/**
- * Determines optimal image quality based on device and network
- * @param {string} uri - The image URI
- * @returns {string} - Optimized image URI with quality parameters
- */
-export const getOptimizedImageUri = (uri) => {
-  if (!uri || typeof uri !== "string") return uri;
+// Create a safe version of image manipulator functions
+let ImageManipulator = null;
+let canManipulate = false;
 
-  // If it's already a local file or doesn't contain http, return as is
-  if (uri.startsWith("file:") || !uri.includes("http")) {
+// Try to import ImageManipulator safely
+try {
+  // Only attempt to import if we're not in a web environment where it might not be supported
+  if (Platform.OS !== 'web') {
+    ImageManipulator = require('expo-image-manipulator');
+    canManipulate = true;
+  }
+} catch (err) {
+  console.warn('expo-image-manipulator not available, image optimization disabled', err);
+  canManipulate = false;
+}
+
+// Optimize image for upload - gracefully handle missing dependency
+export const optimizeImage = async (uri) => {
+  // If ImageManipulator is not available, return the original URI
+  if (!canManipulate || !ImageManipulator) {
+    console.log('Image optimization skipped - manipulator not available');
     return uri;
   }
-
-  // For cloud storage providers, add optimization parameters
-  if (uri.includes("firebasestorage.googleapis.com")) {
-    // For Firebase Storage
-    return uri.includes("?")
-      ? `${uri}&quality=80&size=600`
-      : `${uri}?quality=80&size=600`;
+  
+  try {
+    const result = await ImageManipulator.manipulateAsync(
+      uri,
+      [{ resize: { width: 800 } }],
+      { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+    );
+    return result.uri;
+  } catch (error) {
+    console.error('Error optimizing image:', error);
+    return uri; // Return original uri if optimization fails
   }
+};
 
-  if (uri.includes("cloudinary.com")) {
-    // For Cloudinary
-    return uri.replace("/upload/", "/upload/q_auto,w_600/");
-  }
-
-  // For other services, you might need different approaches
-  // Default case - return original
+// Get optimized image URI based on device/dimensions
+export const getOptimizedImageUri = (uri) => {
+  if (!uri) return null;
+  // Logic to add any transformations needed for display
   return uri;
 };
 
-/**
- * Preloads an array of images to cache
- * @param {Array} imageUris - Array of image URIs to preload
- */
-export const preloadImages = async (imageUris) => {
-  if (!imageUris || !Array.isArray(imageUris)) return;
-
-  // Use Image.prefetch if available in platform
-  if (Platform.OS === "ios" || Platform.OS === "android") {
-    const { Image } = require("react-native");
-
-    const prefetchPromises = imageUris.map((uri) => {
-      if (uri) return Image.prefetch(getOptimizedImageUri(uri));
-      return Promise.resolve();
-    });
-
-    try {
-      await Promise.all(prefetchPromises);
-    } catch (error) {
-      console.error("Error preloading images:", error);
+// Preload images to avoid flicker
+export const preloadImages = async (uris) => {
+  if (!uris || !Array.isArray(uris)) return;
+  
+  try {
+    // Pre-fetch images on web platforms
+    if (Platform.OS === 'web') {
+      uris.forEach(uri => {
+        if (uri) {
+          const img = new Image();
+          img.src = uri;
+        }
+      });
+    } else {
+      // Use Image.prefetch on native platforms
+      await Promise.all(
+        uris.map(uri => {
+          if (uri) return Image.prefetch(uri);
+          return Promise.resolve();
+        })
+      );
     }
+  } catch (error) {
+    console.error('Error preloading images:', error);
   }
 };
+
+// Bundle functions into a default export
+const imageUtils = {
+  optimizeImage,
+  getOptimizedImageUri,
+  preloadImages,
+  isOptimizationAvailable: canManipulate
+};
+
+export default imageUtils;
