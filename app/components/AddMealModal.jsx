@@ -147,7 +147,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       if (imageUris.length > 0) {
         const uploadResults = await imageService.uploadImagesAndGetUrls(
           imageUris
-        ); // Call imageService
+        );
         console.log("uploadResults:", uploadResults);
 
         if (uploadResults) {
@@ -167,25 +167,28 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
         }
       }
 
-      console.log(
-        "Final uploadedUrls array:",
-        JSON.stringify(uploadedUrls, null, 2)
+      // Log all values for debugging
+      console.log("mealName (name):", mealName);
+      console.log("description:", description);
+      console.log("uploadedUrls (imageUris):", uploadedUrls);
+      console.log("selectedTags (should be tags):", selectedTags);
+      console.log("selectedCategory (should be category):", selectedCategory);
+
+      // FIXED: Swap the positions of selectedTags and selectedCategory
+      await addMeal(
+        mealName, // name
+        description, // description
+        uploadedUrls, // imageUris
+        selectedTags, // tags - SWAPPED position
+        selectedCategory // category - SWAPPED position
       );
 
-      await addMeal(
-        mealName,
-        description,
-        uploadedUrls,
-        originalImageUris, // Pass original URIs
-        selectedTags,
-        selectedCategory
-      );
-      console.log("Original Image URIs before addMeal:", originalImageUris);
+      console.log("Meal added successfully with correct parameter order");
 
       setMealName("");
       setDescription("");
       setImageUris([]);
-      setOriginalImageUris([]); // Clear original URIs
+      setOriginalImageUris([]);
       setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
@@ -236,7 +239,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       onRequestClose={() => setModalVisible(false)}>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.sectionTitle}>Offer Food</Text>
+          <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
@@ -271,7 +274,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
           </View>
           <TextInput
             style={styles.input}
-            placeholder="What food are you offering?"
+            placeholder="Jake jidlo nabizete?"
             value={mealName}
             onChangeText={setMealName}
           />
@@ -281,7 +284,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
               styles.descriptionInput,
               { height: descriptionInputHeight },
             ]}
-            placeholder="Please describe what it is"
+            placeholder="Popis prosim, co to je :D"
             value={description}
             onChangeText={setDescription}
             multiline={true}
