@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Modal,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
@@ -21,6 +22,7 @@ const MealListScreen = () => {
   const router = useRouter();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // Add state for refresh indicator
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [addMealModalVisible, setAddMealModalVisible] = useState(false);
@@ -67,31 +69,79 @@ const MealListScreen = () => {
     </TouchableOpacity>
   );
 
-  const refreshMeals = () => {
-    if (user) {
-      fetchMeals(user.$id, setMeals, setLoading, setError);
+  const refreshMeals = useCallback(async () => {
+    if (!user) return;
+
+    setRefreshing(true);
+    console.log("Refreshing meals data...");
+
+    try {
+      await new Promise((resolve) => {
+        fetchMeals(
+          user.$id,
+          (newMeals) => {
+            setMeals(newMeals);
+            resolve();
+          },
+          () => {}, // Skip updating the main loading state during refresh
+          (newError) => {
+            setError(newError);
+            resolve();
+          }
+        );
+      });
+      console.log("Refresh completed successfully");
+    } catch (err) {
+      console.error("Error during refresh:", err);
+      setError("Failed to refresh meals: " + err.message);
+    } finally {
+      setRefreshing(false);
+      console.log("Refresh operation complete");
     }
-  };
+  }, [user]);
 
   return (
     <View style={styles.container}>
-      {loading ? (
+      {loading && !refreshing ? (
         <ActivityIndicator size="large" color="#007bff" />
       ) : (
         <>
           {error && <Text style={styles.errorText}>{error}</Text>}
 
-          <ScrollView>
-            {categories.map((category) => (
-              <View key={category} style={styles.categoryContainer}>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                <ScrollView horizontal={true}>
-                  {meals
-                    .filter((meal) => meal.category === category)
-                    .map((meal) => renderMealItem({ item: meal }))}
-                </ScrollView>
+          <ScrollView
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={refreshMeals}
+                colors={["#01766A"]}
+                tintColor="#01766A"
+                title="Pulling to refresh..."
+                titleColor="#01766A"
+              />
+            }>
+            {categories.length > 0 ? (
+              categories.map((category) => (
+                <View key={category} style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+                  <ScrollView horizontal={true}>
+                    {meals
+                      .filter((meal) => meal.category === category)
+                      .map((meal) => renderMealItem({ item: meal }))}
+                  </ScrollView>
+                </View>
+              ))
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No meals available</Text>
+                {refreshing && (
+                  <ActivityIndicator
+                    size="small"
+                    color="#01766A"
+                    style={styles.inlineLoader}
+                  />
+                )}
               </View>
-            ))}
+            )}
           </ScrollView>
           <AddMealModal
             modalVisible={addMealModalVisible}
@@ -181,6 +231,20 @@ const styles = StyleSheet.create({
   },
   modalCloseText: {
     color: "white",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 50,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 10,
+  },
+  inlineLoader: {
+    marginTop: 10,
   },
 });
 

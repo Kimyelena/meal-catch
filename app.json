@@ -13,7 +13,10 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select images."
       },
-      "permissions": ["CAMERA", "CAMERA"],
+      "permissions": [
+        "CAMERA",
+        "CAMERA"
+      ],
       "bundleIdentifier": "com.anonymous.meal-catch"
     },
     "android": {
@@ -21,8 +24,12 @@
         "foregroundImage": "./assets/images/meal-catch-logo.png",
         "backgroundColor": "#ffffff"
       },
-
-      "permissions": ["READ_MEDIA_IMAGES", "READ_EXTERNAL_STORAGE", "CAMERA"]
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "READ_EXTERNAL_STORAGE",
+        "CAMERA"
+      ],
+      "package": "com.kimibucko.mealcatch"
     },
     "web": {
       "bundler": "metro",
@@ -43,6 +50,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "08e132a8-a52c-4f2a-bdcb-e7dbed9e7d64"
+      }
     }
   }
 }

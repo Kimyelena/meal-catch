@@ -10,6 +10,9 @@ import {
   Alert,
   ScrollView,
   ActivityIndicator,
+  Keyboard,
+  TouchableWithoutFeedback,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
@@ -24,7 +27,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
   const [mealName, setMealName] = useState("");
   const [description, setDescription] = useState("");
   const [imageUris, setImageUris] = useState([]);
-  const [originalImageUris, setOriginalImageUris] = useState([]); // New state
+  const [originalImageUris, setOriginalImageUris] = useState([]);
   const [uploadedImageUrls, setUploadedImageUrls] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -83,7 +86,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       });
       if (!result.canceled) {
         setImageUris((prevUris) => [...prevUris, result.assets[0].uri]);
-        setOriginalImageUris((prevUris) => [...prevUris, result.assets[0].uri]); // Store original URI
+        setOriginalImageUris((prevUris) => [...prevUris, result.assets[0].uri]);
       }
     } catch (error) {
       console.log("Error opening camera:", error);
@@ -105,7 +108,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
         setOriginalImageUris((prevUris) => [
           ...prevUris,
           ...result.assets.map((asset) => asset.uri),
-        ]); // Store original URIs
+        ]);
       }
     } catch (error) {
       console.error("Gallery Error:", error);
@@ -143,22 +146,18 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     try {
       setLoading(true);
 
-      // We'll send the original image URIs directly to addMeal
-      // and let the services handle the upload process
       console.log("Sending original image URIs:", originalImageUris);
 
-      // FIXED: Swap the positions of selectedTags and selectedCategory
       await addMeal(
-        mealName, // name
-        description, // description
-        originalImageUris, // imageUris - using original URIs
-        selectedTags, // tags
-        selectedCategory // category
+        mealName,
+        description,
+        originalImageUris,
+        selectedTags,
+        selectedCategory
       );
 
       console.log("Meal added successfully");
 
-      // Reset form
       setMealName("");
       setDescription("");
       setImageUris([]);
@@ -189,7 +188,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     );
     setOriginalImageUris((prevUris) =>
       prevUris.filter((_, index) => index !== indexToDelete)
-    ); // Delete original URI
+    );
   };
 
   useEffect(() => {
@@ -197,7 +196,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       setMealName("");
       setDescription("");
       setImageUris([]);
-      setOriginalImageUris([]); // Clear original URIs
+      setOriginalImageUris([]);
       setUploadedImageUrls([]);
       setSelectedTags([]);
       setSelectedCategory(null);
@@ -211,117 +210,136 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       transparent={true}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setModalVisible(false)}>
-            <Text style={styles.closeButtonText}>X</Text>
-          </TouchableOpacity>
-          <View style={styles.photoContainer}>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
             <TouchableOpacity
-              style={styles.photoFrame}
-              onPress={handlePhotoSelection}>
-              <Text style={styles.photoFrameText}>
-                {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
-              </Text>
+              style={styles.closeButton}
+              onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeButtonText}>X</Text>
             </TouchableOpacity>
             <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}>
-              {loading ? (
-                <ActivityIndicator size="small" color="#007bff" />
-              ) : (
-                imageUris.map((uri, index) => (
-                  <View key={index} style={styles.imageWrapper}>
-                    <Image source={{ uri }} style={styles.imagePreview} />
-                    <TouchableOpacity
-                      onPress={() => handleDeleteImage(index)}
-                      style={styles.deleteButton}>
-                      <Text>x</Text>
-                    </TouchableOpacity>
-                  </View>
-                ))
-              )}
+              style={styles.scrollView}
+              contentContainerStyle={styles.scrollViewContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}>
+              <View style={styles.photoContainer}>
+                <TouchableOpacity
+                  style={styles.photoFrame}
+                  onPress={handlePhotoSelection}>
+                  <Text style={styles.photoFrameText}>
+                    {imageUris.length === 0 ? "Add Photos" : "Change Photos"}
+                  </Text>
+                </TouchableOpacity>
+                <ScrollView
+                  horizontal={true}
+                  showsHorizontalScrollIndicator={false}>
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#007bff" />
+                  ) : (
+                    imageUris.map((uri, index) => (
+                      <View key={index} style={styles.imageWrapper}>
+                        <Image source={{ uri }} style={styles.imagePreview} />
+                        <TouchableOpacity
+                          onPress={() => handleDeleteImage(index)}
+                          style={styles.deleteButton}>
+                          <Text>x</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ))
+                  )}
+                </ScrollView>
+              </View>
+              <TextInput
+                style={styles.input}
+                placeholder="Jake jidlo nabizete?"
+                value={mealName}
+                onChangeText={setMealName}
+                returnKeyType="done"
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.descriptionInput,
+                  { height: descriptionInputHeight },
+                ]}
+                placeholder="Popis prosim, co to je :D"
+                value={description}
+                onChangeText={setDescription}
+                multiline={true}
+                blurOnSubmit={true}
+                returnKeyType="done"
+                onContentSizeChange={(event) => {
+                  const newHeight = event.nativeEvent.contentSize.height;
+                  setDescriptionInputHeight(
+                    Math.max(
+                      MIN_INPUT_HEIGHT,
+                      Math.min(newHeight, MAX_INPUT_HEIGHT)
+                    )
+                  );
+                }}
+              />
+              <View style={styles.categoriesContainer}>
+                {categoryDisplayOrder.map((category) => (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.categoryButton,
+                      selectedCategory === category &&
+                        styles.selectedCategoryButton,
+                    ]}
+                    onPress={() => handleSelectCategory(category)}>
+                    <MaterialIcons
+                      name={
+                        categoryIcons[category] ||
+                        categoryIcons[defaultCategory]
+                      }
+                      size={20}
+                      color={selectedCategory === category ? "#fff" : "#555"}
+                      style={styles.categoryIcon}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryText,
+                        selectedCategory === category &&
+                          styles.selectedCategoryText,
+                      ]}>
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.tagsContainer}>
+                {tags.map((tag) => (
+                  <TouchableOpacity
+                    key={tag}
+                    style={[
+                      styles.tag,
+                      selectedTags.includes(tag) && styles.selectedTag,
+                    ]}
+                    onPress={() => handleToggleTag(tag)}>
+                    <Text style={styles.tagText}>{tag}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <View style={styles.bottomPadding} />
             </ScrollView>
+
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => {
+                Keyboard.dismiss();
+                handleAddMeal();
+              }}>
+              <Text style={styles.addButtonText}>
+                {loading ? "Uploading..." : "Add Meal"}
+              </Text>
+            </TouchableOpacity>
           </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Jake jidlo nabizete?"
-            value={mealName}
-            onChangeText={setMealName}
-          />
-          <TextInput
-            style={[
-              styles.input,
-              styles.descriptionInput,
-              { height: descriptionInputHeight },
-            ]}
-            placeholder="Popis prosim, co to je :D"
-            value={description}
-            onChangeText={setDescription}
-            multiline={true}
-            onContentSizeChange={(event) => {
-              const newHeight = event.nativeEvent.contentSize.height;
-              setDescriptionInputHeight(
-                Math.max(
-                  MIN_INPUT_HEIGHT,
-                  Math.min(newHeight, MAX_INPUT_HEIGHT)
-                )
-              );
-            }}
-          />
-          <View style={styles.categoriesContainer}>
-            {categoryDisplayOrder.map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={[
-                  styles.categoryButton,
-                  selectedCategory === category &&
-                    styles.selectedCategoryButton,
-                ]}
-                onPress={() => handleSelectCategory(category)}>
-                <MaterialIcons
-                  name={
-                    categoryIcons[category] || categoryIcons[defaultCategory]
-                  }
-                  size={20}
-                  color={selectedCategory === category ? "#fff" : "#555"}
-                  style={styles.categoryIcon}
-                />
-                <Text
-                  style={[
-                    styles.categoryText,
-                    selectedCategory === category &&
-                      styles.selectedCategoryText,
-                  ]}>
-                  {category}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          {/* ----------------------------- */}
-          <View style={styles.tagsContainer}>
-            {tags.map((tag) => (
-              <TouchableOpacity
-                key={tag}
-                style={[
-                  styles.tag,
-                  selectedTags.includes(tag) && styles.selectedTag,
-                ]}
-                onPress={() => handleToggleTag(tag)}>
-                <Text style={styles.tagText}>{tag}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <TouchableOpacity style={styles.addButton} onPress={handleAddMeal}>
-            <Text style={styles.addButtonText}>
-              {loading ? "Uploading..." : "Add Meal"}
-            </Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </Modal>
   );
 };
@@ -341,6 +359,13 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     position: "relative",
+  },
+  scrollView: {
+    width: "100%",
+  },
+  scrollViewContent: {
+    alignItems: "center",
+    paddingBottom: 80,
   },
   addButton: {
     backgroundColor: "#01766A",
@@ -484,6 +509,9 @@ const styles = StyleSheet.create({
   tagText: {
     color: "#333",
     fontSize: 14,
+  },
+  bottomPadding: {
+    height: 70,
   },
 });
 
