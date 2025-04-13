@@ -4,7 +4,10 @@ import * as FileSystem from "expo-file-system";
 
 const imageService = {
   async uploadImagesAndGetUrls(imageUris) {
-    console.log("uploadImagesAndGetUrls received:", imageUris);
+    console.log(
+      "uploadImagesAndGetUrls received:",
+      Array.isArray(imageUris) ? `${imageUris.length} images` : imageUris
+    );
 
     if (!config.bucketId) {
       console.error("Error: bucketId is not defined");
@@ -30,54 +33,52 @@ const imageService = {
       try {
         console.log("Processing image URI:", uri);
 
-        // Get file info
-        const fileInfo = await FileSystem.getInfoAsync(uri);
-        if (!fileInfo.exists) {
-          console.error("File does not exist:", uri);
+        // Verify the file exists
+        try {
+          const fileInfo = await FileSystem.getInfoAsync(uri);
+          if (!fileInfo.exists) {
+            console.error("File does not exist:", uri);
+            continue;
+          }
+        } catch (fileCheckError) {
+          console.error("Error checking file:", fileCheckError);
           continue;
         }
 
-        // Read the file as base64
-        const base64 = await FileSystem.readAsStringAsync(uri, {
-          encoding: FileSystem.EncodingType.Base64,
-        });
+        // Create a file object with necessary metadata
+        const fileExt = uri.split(".").pop()?.toLowerCase() || "jpg";
+        const mimeType =
+          fileExt === "png"
+            ? "image/png"
+            : fileExt === "gif"
+            ? "image/gif"
+            : "image/jpeg";
 
-        // Determine MIME type from URI extension
-        let mimeType = "image/jpeg"; // default
-        if (uri.toLowerCase().endsWith(".png")) mimeType = "image/png";
-        if (uri.toLowerCase().endsWith(".gif")) mimeType = "image/gif";
+        const fileObject = {
+          uri: uri,
+          name: `image-${Date.now()}.${fileExt}`,
+          type: mimeType,
+        };
 
-        // Create blob
-        const blob = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.onload = function () {
-            resolve(xhr.response);
-          };
-          xhr.onerror = function () {
-            reject(new Error("Failed to create blob"));
-          };
-          xhr.responseType = "blob";
-          xhr.open("GET", `data:${mimeType};base64,${base64}`, true);
-          xhr.send(null);
-        });
+        console.log("Sending file object to storage service:", fileObject.name);
 
-        console.log("Created blob:", blob.size, "bytes,", "type:", blob.type);
-
-        // Upload the blob
-        const result = await storageService.uploadFile(blob);
+        // Upload the file
+        const result = await storageService.uploadFile(fileObject);
 
         if (result.error) {
           console.error("Upload failed:", result.error);
           continue;
         }
 
-        // Get the URL and add it to our results
-        const fileId = result.data;
-        const fileUrl = storageService.getFileViewUrl(fileId);
+        // Get the URL from the file ID
+        if (result.data) {
+          const fileId = result.data;
+          const fileUrl = storageService.getFileViewUrl(fileId);
 
-        if (fileUrl) {
-          console.log("Generated URL:", fileUrl);
-          uploadedUrls.push(fileUrl);
+          if (fileUrl) {
+            console.log("Generated URL:", fileUrl);
+            uploadedUrls.push(fileUrl);
+          }
         }
       } catch (error) {
         console.error("Error processing image:", error);
@@ -85,7 +86,9 @@ const imageService = {
       }
     }
 
-    console.log("Final uploaded URLs:", uploadedUrls);
+    console.log(`Final uploaded URLs count: ${uploadedUrls.length}`);
+    console.log("Final URLs:", JSON.stringify(uploadedUrls));
+
     return uploadedUrls;
   },
 };

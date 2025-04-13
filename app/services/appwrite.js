@@ -1,30 +1,30 @@
-import { Client, Databases, Account, Storage, ID } from "react-native-appwrite";
+import { Client, Account, Databases, Storage } from 'react-native-appwrite';
 
+// Initialize the Appwrite client
+const client = new Client();
+
+// AppWrite Config
 const config = {
-  endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
+  endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1',
   projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-  bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
-  db: process.env.EXPO_PUBLIC_APPWRITE_DB_ID,
-  col: {
-    meals: process.env.EXPO_PUBLIC_APPWRITE_COL_MEALS_ID,
-    users: process.env.EXPO_PUBLIC_APPWRITE_COL_USERS_ID,
-  },
+  databaseId: process.env.EXPO_PUBLIC_APPWRITE_DB_ID,
+  bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID, // Make sure this is defined
+  collectionId: process.env.EXPO_PUBLIC_APPWRITE_COL_USERS_ID,
 };
 
-const client = new Client()
-  .setEndpoint(config.endpoint)
-  .setProject(config.projectId);
+// Project connection
+client.setEndpoint(config.endpoint).setProject(config.projectId);
 
-const databases = new Databases(client);
+// Initialize Appwrite services
 const account = new Account(client);
+const databases = new Databases(client);  // Changed from 'database' to 'databases'
 const storage = new Storage(client);
 
-export default {
-  client,
-  databases,
-  account,
-  config,
-  ID,
-};
+// Debug config
+console.log('Appwrite config:');
+console.log('- endpoint:', config.endpoint);
+console.log('- projectId:', config.projectId);
+console.log('- bucketId:', config.bucketId);
+console.log('- databaseId:', config.databaseId);
 
-export { client, databases, account, config, storage, ID };
+export { client, account, databases, storage, config };  // Export 'databases' instead of 'database'

@@ -1,50 +1,65 @@
 import { databases } from "./appwrite";
+import { Query } from "react-native-appwrite";
 
 const databaseService = {
-  // List Documents
-  async listDocuments(dbId, colId, queries = []) {
+  async getDocument(databaseId, collectionId, documentId) {
     try {
-      const response = await databases.listDocuments(dbId, colId, queries);
-      return { data: response.documents || [], error: null };
+      return await databases.getDocument(databaseId, collectionId, documentId);
     } catch (error) {
-      console.error("Error fetching documents:", error.message);
-      return { error: error.message };
+      console.error("Error getting document:", error);
+      throw error;
     }
   },
-  // Create Documents
-  async createDocument(dbId, colId, data, id = null) {
+
+  async listDocuments(databaseId, collectionId, queries = []) {
     try {
-      return await databases.createDocument(dbId, colId, id || undefined, data);
+      return await databases.listDocuments(databaseId, collectionId, queries);
     } catch (error) {
-      console.error("Error creating document", error.message);
-      return {
-        error: error.message,
-      };
+      console.error("Error listing documents:", error);
+      throw error;
     }
   },
-  // Update Document
-  async updateDocument(dbId, colId, id, data) {
+
+  async createDocument(databaseId, collectionId, data, documentId = null) {
     try {
-      return await databases.updateDocument(dbId, colId, id, data);
+      return await databases.createDocument(
+        databaseId,
+        collectionId,
+        documentId,
+        data
+      );
     } catch (error) {
-      console.error("Error updating document", error.message);
-      return {
-        error: error.message,
-      };
+      console.error("Error creating document:", error);
+      throw error;
     }
   },
-  // Delete Document
-  async deleteDocument(dbId, colId, id) {
+
+  async updateDocument(databaseId, collectionId, documentId, data) {
     try {
-      await databases.deleteDocument(dbId, colId, id);
-      return { success: true };
+      return await databases.updateDocument(
+        databaseId,
+        collectionId,
+        documentId,
+        data
+      );
     } catch (error) {
-      console.error("Error deleting document", error.message);
-      return {
-        error: error.message,
-      };
+      console.error("Error updating document:", error);
+      throw error;
     }
   },
+
+  async deleteDocument(databaseId, collectionId, documentId) {
+    try {
+      return await databases.deleteDocument(
+        databaseId,
+        collectionId,
+        documentId
+      );
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      throw error;
+    }
+  }
 };
 
 export default databaseService;

@@ -64,30 +64,43 @@ const mealService = {
       throw new Error("Missing Database or Collection ID configuration.");
     }
 
-    // Process images first - even if this fails, we'll still try to create the meal
+    // Process images - fix the data handling
     let uploadedImageUrls = [];
     try {
       if (imageUris && imageUris.length > 0) {
-        // We'll process all images at once in the imageService
-        const urls = await imageService.uploadImagesAndGetUrls(imageUris);
+        console.log(`Attempting to upload ${imageUris.length} images...`);
 
-        if (Array.isArray(urls)) {
-          // Filter to ensure we only have strings
-          uploadedImageUrls = urls.filter((url) => typeof url === "string");
-          console.log("Image upload successful, got URLs:", uploadedImageUrls);
+        // Direct call to imageService
+        const uploadResults = await imageService.uploadImagesAndGetUrls(imageUris);
+        console.log("Direct uploadResults received:", 
+          Array.isArray(uploadResults) ? JSON.stringify(uploadResults) : uploadResults);
+        
+        if (Array.isArray(uploadResults)) {
+          // Accept any non-empty string URLs
+          uploadedImageUrls = uploadResults
+            .map(url => String(url))
+            .filter(url => url && url.length > 0 && url.includes("://"));
+          
+          console.log(`Filtered ${uploadResults.length} results to ${uploadedImageUrls.length} URLs`);
+        } else {
+          console.warn("Upload results is not an array:", uploadResults);
         }
+      } else {
+        console.log("No images to upload");
       }
     } catch (imageError) {
       console.error("Error uploading images:", imageError);
-      // Continue with meal creation, but with empty image URLs
+      // Continue with meal creation with empty image array
     }
+
+    console.log("Final uploadedImageUrls:", uploadedImageUrls);
 
     try {
       const mealData = {
         name,
         createdAt: new Date().toISOString(),
         user_id,
-        imageUris: uploadedImageUrls, // This will be a simple array of strings
+        imageUris: uploadedImageUrls, // This should now have the URLs or be empty
         description,
         tags,
         category,
@@ -102,7 +115,7 @@ const mealService = {
         ID.unique()
       );
 
-      console.log("Meal created successfully:", response.$id);
+      console.log("Meal created successfully with ID:", response.$id);
       return {
         data: response,
         error: null,
