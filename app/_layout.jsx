@@ -12,7 +12,6 @@ import {
 import { AuthProvider, useAuth } from "../app/contexts/AuthContext";
 import AddMealModal from "../app/components/AddMealModal";
 import AccountButton from "./components/IconButtons/AccountButton";
-import BackButton from "./components/IconButtons/BackButton";
 
 import mealService from "../app/services/mealService";
 
@@ -24,12 +23,6 @@ const AppContent = () => {
   const [headerTitle, setHeaderTitle] = useState("Account");
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
 
-  // Move useCallback to the top with other hooks
-  const getHeaderTitle = useCallback(() => {
-    return user ? `Hello! ${user.name}` : "Account";
-  }, [user]);
-
-  // Update header title when user changes
   useEffect(() => {
     if (user && user.name) {
       setHeaderTitle(`Hello! ${user.name}`);
@@ -40,7 +33,6 @@ const AppContent = () => {
 
   console.log("AppContent: useAuth() returned:", { user, loading });
 
-  // Only redirect on initial load, not on subsequent auth state changes
   useEffect(() => {
     if (loading) {
       console.log("AppContent Effect: Still loading auth state...");
@@ -49,7 +41,6 @@ const AppContent = () => {
 
     console.log("AppContent Effect: Auth loading finished. User:", user);
 
-    // Only redirect if this is the initial load and we're on the home page
     if (user && !initialLoadComplete && pathname === "/") {
       console.log(
         "AppContent Effect: Initial user load, redirecting from / to /meals"
@@ -57,7 +48,6 @@ const AppContent = () => {
       router.replace("/(meals)");
     }
 
-    // Mark initial load as complete
     setInitialLoadComplete(true);
   }, [user, loading, pathname, router, initialLoadComplete]);
 

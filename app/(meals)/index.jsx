@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Image,
-  Modal,
   RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
@@ -22,7 +21,7 @@ const MealListScreen = () => {
   const router = useRouter();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false); // Add state for refresh indicator
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [addMealModalVisible, setAddMealModalVisible] = useState(false);
@@ -49,12 +48,10 @@ const MealListScreen = () => {
   }, [meals]);
 
   const handleMealPress = (meal) => {
-    console.log("MealListScreen: handleMealPress - Opening modal");
     setSelectedMeal(meal);
   };
 
   const handleModalClose = () => {
-    console.log("MealListScreen: handleModalClose - Closing modal");
     setSelectedMeal(null);
     refreshMeals();
   };
@@ -72,7 +69,6 @@ const MealListScreen = () => {
     if (!user) return;
 
     setRefreshing(true);
-    console.log("Refreshing meals data...");
 
     try {
       await new Promise((resolve) => {
@@ -82,20 +78,17 @@ const MealListScreen = () => {
             setMeals(newMeals);
             resolve();
           },
-          () => {}, // Skip updating the main loading state during refresh
+          () => {},
           (newError) => {
             setError(newError);
             resolve();
           }
         );
       });
-      console.log("Refresh completed successfully");
     } catch (err) {
-      console.error("Error during refresh:", err);
       setError("Failed to refresh meals: " + err.message);
     } finally {
       setRefreshing(false);
-      console.log("Refresh operation complete");
     }
   }, [user]);
 
@@ -147,7 +140,6 @@ const MealListScreen = () => {
             setModalVisible={setAddMealModalVisible}
             addMeal={mealService.addMeal}
           />
-          {/* Pass selectedMeal to MealItemView */}
           {selectedMeal && (
             <MealItemView
               meal={selectedMeal}
@@ -175,16 +167,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryContainer: {
-    marginBottom: 20,
+    marginBottom: 15,
   },
   categoryTitle: {
-    fontSize: 12,
+    fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
   },
   mealCard: {
-    width: 140,
-    height: 140,
+    width: 155,
+    height: 155,
     marginRight: 5,
     borderRadius: 5,
     overflow: "hidden",

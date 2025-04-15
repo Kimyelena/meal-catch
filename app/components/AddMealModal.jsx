@@ -16,9 +16,6 @@ import {
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import { launchImageLibraryAsync, MediaTypeOptions } from "expo-image-picker";
-import imageService from "../services/imageService";
-import { config } from "../services/appwrite";
 
 const MIN_INPUT_HEIGHT = 70;
 const MAX_INPUT_HEIGHT = 150;
@@ -43,7 +40,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     Handmade: "food-bank",
     LongLasting: "local-grocery-store",
     Sweets: "cake",
-    Others: "category",
+    Other: "apps",
   };
 
   const tags = [
@@ -63,6 +60,19 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
     "Sugar-free",
     "Sweet",
     "Long-lasting",
+    "Organic",
+    "Dairy-free",
+    "Nut-free",
+    "Low-fat",
+    "High-protein",
+    "Spicy",
+    "Savory",
+    "Gourmet",
+    "Traditional",
+    "Farm-to-table",
+    "Non-GMO",
+    "Whole30",
+    "Comfort food",
   ];
 
   const requestPermissions = async () => {
@@ -213,7 +223,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.sectionTitle}>Nabidnout jidlo</Text>
+            <Text style={styles.sectionTitle}>Offer Food</Text>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}>
@@ -221,7 +231,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
             </TouchableOpacity>
             <ScrollView
               style={styles.scrollView}
-              contentContainerStyle={styles.scrollViewContent}
+              contentContainerStyle
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}>
               <View style={styles.photoContainer}>
@@ -253,7 +263,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="Jake jidlo nabizete?"
+                placeholder="What food are you offering?"
                 value={mealName}
                 onChangeText={setMealName}
                 returnKeyType="done"
@@ -265,7 +275,7 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
                   styles.descriptionInput,
                   { height: descriptionInputHeight },
                 ]}
-                placeholder="Popis prosim, co to je :D"
+                placeholder="Please describe what it is :D"
                 value={description}
                 onChangeText={setDescription}
                 multiline={true}
@@ -360,13 +370,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     position: "relative",
   },
-  scrollView: {
-    width: "100%",
-  },
-  scrollViewContent: {
-    alignItems: "center",
-    paddingBottom: 80,
-  },
+  // scrollView: {
+  //   width: "100%",
+  // },
+  // scrollViewContent: {
+  //   alignItems: "center",
+  //   paddingBottom: 80,
+  // },
   addButton: {
     backgroundColor: "#01766A",
     paddingVertical: 10,
@@ -387,7 +397,7 @@ const styles = StyleSheet.create({
     right: 10,
   },
   closeButtonText: {
-    fontSize: 30,
+    fontSize: 20,
     color: "#D3D3D3",
   },
   photoContainer: {
@@ -416,8 +426,8 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   imagePreview: {
-    width: 95,
-    height: 95,
+    width: 100,
+    height: 10,
     borderRadius: 8,
   },
   deleteButton: {
@@ -449,10 +459,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
-    marginTop: 15,
+    marginTop: 5,
     marginBottom: 10,
     alignSelf: "flex-start",
-    marginLeft: "5%",
   },
   categoriesContainer: {
     flexDirection: "row",
@@ -473,8 +482,8 @@ const styles = StyleSheet.create({
     minWidth: 80,
   },
   selectedCategoryButton: {
-    backgroundColor: "#007bff",
-    borderColor: "#0056b3",
+    backgroundColor: "#9DC183",
+    borderColor: "#98FF98s",
   },
   categoryIcon: {
     marginBottom: 2,
@@ -503,7 +512,7 @@ const styles = StyleSheet.create({
     margin: 3,
   },
   selectedTag: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#9DC183",
     color: "#fff",
   },
   tagText: {

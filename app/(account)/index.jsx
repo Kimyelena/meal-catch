@@ -9,6 +9,7 @@ import {
   Image,
   Dimensions,
   Modal,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
@@ -28,6 +29,7 @@ const AccountScreen = () => {
   const [error, setError] = useState(null);
   const [selectedMeal, setSelectedMeal] = useState(null);
   const [isMealModalVisible, setIsMealModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchUserMeals = useCallback(async () => {
     if (user) {
@@ -89,9 +91,11 @@ const AccountScreen = () => {
     </TouchableOpacity>
   );
 
-  const refreshMeals = () => {
+  const refreshMeals = async () => {
     if (user) {
-      fetchUserMeals();
+      setRefreshing(true);
+      await fetchUserMeals();
+      setRefreshing(false);
     }
   };
 
@@ -117,6 +121,16 @@ const AccountScreen = () => {
               keyExtractor={(item) => item.$id}
               numColumns={3}
               contentContainerStyle={styles.flatListContent}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={refreshMeals}
+                  colors={["#01766A"]}
+                  tintColor="#01766A"
+                  title="Pull to refresh..."
+                  titleColor="#01766A"
+                />
+              }
             />
           )}
         </View>
@@ -125,13 +139,21 @@ const AccountScreen = () => {
         <MaterialIcons name="logout" size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* Pass selectedMeal to MealItem */}
+      {/* Ensure Modal is rendered outside of FlatList */}
       {selectedMeal && (
-        <MealItem
-          meal={selectedMeal}
-          onClose={handleModalClose}
-          refreshMeals={refreshMeals}
-        />
+        <Modal
+          visible={!!selectedMeal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={handleModalClose}>
+          <View style={styles.modalOverlay}>
+            <MealItem
+              meal={selectedMeal}
+              onClose={handleModalClose}
+              refreshMeals={refreshMeals}
+            />
+          </View>
+        </Modal>
       )}
     </View>
   );

@@ -31,13 +31,11 @@ const MealItemView = ({ meal, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Add debugging for image URIs
   useEffect(() => {
     if (meal && meal.imageUris && meal.imageUris.length > 0) {
       console.log("Meal ID:", meal.id, "Images:", meal.imageUris);
       console.log("Image count:", meal.imageUris.length);
 
-      // Log each image URL separately for clarity
       meal.imageUris.forEach((uri, i) => {
         console.log(`Image ${i}: ${uri}`);
       });
@@ -62,7 +60,7 @@ const MealItemView = ({ meal, onClose }) => {
       console.error("Error fetching user details:", error);
     } finally {
       setIsLoading(false);
-      setRefreshing(false); // End refreshing state
+      setRefreshing(false);
     }
   };
 
@@ -105,14 +103,11 @@ const MealItemView = ({ meal, onClose }) => {
     if (mealDetails.ownerNumber) {
       Clipboard.setString(mealDetails.ownerNumber);
 
-      // Show feedback that number was copied
       setCopyFeedback(true);
 
-      // Provide feedback based on platform
       if (Platform.OS === "android") {
         ToastAndroid.show("Phone number copied!", ToastAndroid.SHORT);
       } else {
-        // For iOS and other platforms
         Alert.alert(
           "Copied",
           "Phone number copied to clipboard!",
@@ -120,8 +115,6 @@ const MealItemView = ({ meal, onClose }) => {
           { cancelable: true }
         );
       }
-
-      // Reset the feedback state after a brief delay
       setTimeout(() => {
         setCopyFeedback(false);
       }, 2000);
@@ -132,7 +125,6 @@ const MealItemView = ({ meal, onClose }) => {
     console.log("Refreshing meal details...");
     setRefreshing(true);
 
-    // Clear image cache by adding new timestamp
     if (meal.imageUris && meal.imageUris.length > 0) {
       console.log("Refreshing images...");
       preloadImages(
@@ -140,7 +132,6 @@ const MealItemView = ({ meal, onClose }) => {
       );
     }
 
-    // Re-fetch user details
     await fetchUserDetails();
   };
 
@@ -174,8 +165,6 @@ const MealItemView = ({ meal, onClose }) => {
           showsHorizontalScrollIndicator={false}>
           {meal.imageUris &&
             meal.imageUris.map((uri, index) => {
-              // Add timestamp but avoid complex query parameters that might cause issues
-              // Use a simpler cache busting strategy
               const cacheBustUri = `${uri}${
                 uri.includes("?") ? "&" : "?"
               }t=${Date.now()}`;
@@ -262,7 +251,7 @@ const MealItemView = ({ meal, onClose }) => {
 
   return (
     <Modal
-      animationType="slide" // Ensure consistent animation
+      animationType="slide"
       transparent={true}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}
@@ -272,12 +261,14 @@ const MealItemView = ({ meal, onClose }) => {
       <View
         style={[
           styles.modalOverlay,
-          { zIndex: 10, pointerEvents: modalVisible ? "auto" : "none" }, // Prevent background interaction
+          { zIndex: 10, pointerEvents: modalVisible ? "auto" : "none" },
         ]}>
         <Animated.View
           style={[styles.modalContent, { height: modalAnimation }]}>
           {renderContent()}
-          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(false)}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -290,7 +281,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    zIndex: 10, // Ensure this modal is on top
+    zIndex: 10,
   },
   modalContent: {
     backgroundColor: "white",
@@ -347,9 +338,9 @@ const styles = StyleSheet.create({
     borderRadius: 15,
   },
   phoneNumberButton: {
-    backgroundColor: "#e8f5e9", // light green background when showing number
+    backgroundColor: "#e8f5e9",
     borderWidth: 1,
-    borderColor: "#01766A", // Changed border color for consistency
+    borderColor: "#01766A",
   },
   phoneContainer: {
     flexDirection: "row",
@@ -362,7 +353,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   phoneNumberActiveText: {
-    color: "#01766A", // Changed text color for consistency
+    color: "#01766A",
     fontWeight: "bold",
   },
   questionMarkText: {
