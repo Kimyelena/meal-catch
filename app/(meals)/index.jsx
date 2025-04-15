@@ -26,7 +26,6 @@ const MealListScreen = () => {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [addMealModalVisible, setAddMealModalVisible] = useState(false);
-  const [mealDetailsModalVisible, setMealDetailsModalVisible] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState(null);
 
   useEffect(() => {
@@ -50,12 +49,12 @@ const MealListScreen = () => {
   }, [meals]);
 
   const handleMealPress = (meal) => {
+    console.log("MealListScreen: handleMealPress - Opening modal");
     setSelectedMeal(meal);
-    setMealDetailsModalVisible(true);
   };
 
   const handleModalClose = () => {
-    setMealDetailsModalVisible(false);
+    console.log("MealListScreen: handleModalClose - Closing modal");
     setSelectedMeal(null);
     refreshMeals();
   };
@@ -148,24 +147,14 @@ const MealListScreen = () => {
             setModalVisible={setAddMealModalVisible}
             addMeal={mealService.addMeal}
           />
-          {/* Meal Details Modal */}
-          <Modal
-            animationType="none"
-            transparent={true}
-            visible={mealDetailsModalVisible}
-            onRequestClose={handleModalClose}>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                {selectedMeal && (
-                  <MealItemView
-                    meal={selectedMeal}
-                    onClose={handleModalClose}
-                    visible={mealDetailsModalVisible}
-                  />
-                )}
-              </View>
-            </View>
-          </Modal>
+          {/* Pass selectedMeal to MealItemView */}
+          {selectedMeal && (
+            <MealItemView
+              meal={selectedMeal}
+              onClose={handleModalClose}
+              visible={!!selectedMeal}
+            />
+          )}
         </>
       )}
     </View>

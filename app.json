@@ -13,10 +13,6 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select images."
       },
-      "permissions": [
-        "CAMERA",
-        "CAMERA"
-      ],
       "bundleIdentifier": "com.anonymous.meal-catch"
     },
     "android": {

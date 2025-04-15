@@ -33,19 +33,17 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
     if (modalVisible) {
       Animated.timing(modalAnimation, {
         toValue: height * 0.65,
-        duration: 100,
+        duration: 300,
         useNativeDriver: false,
       }).start();
     } else {
       Animated.timing(modalAnimation, {
         toValue: 0,
-        duration: 100,
+        duration: 300,
         useNativeDriver: false,
       }).start(() => {
         modalAnimation.setValue(height);
-        setTimeout(() => {
-          onClose();
-        }, 1);
+        onClose();
       });
     }
   }, [modalVisible]);
@@ -74,12 +72,6 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
     }
   };
 
-  const handleDeleteImage = (indexToDelete) => {
-    setEditedImageUris((prevUris) =>
-      prevUris.filter((_, index) => index !== indexToDelete)
-    );
-  };
-
   const handleDeleteMeal = async () => {
     Alert.alert("Delete Meal", "Are you sure you want to delete this meal?", [
       { text: "Cancel", style: "cancel" },
@@ -103,32 +95,9 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
     ]);
   };
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-    });
-
-    if (!result.canceled) {
-      const selectedUris = result.assets.map((asset) => asset.uri);
-      setEditedImageUris((prevUris) => [...prevUris, ...selectedUris]);
-    }
-  };
-
-  const addTag = () => {
-    if (newTag.trim() !== "" && !editedTags.includes(newTag.trim())) {
-      setEditedTags([...editedTags, newTag.trim()]);
-      setNewTag("");
-    }
-  };
-
-  const removeTag = (tagToRemove) => {
-    setEditedTags(editedTags.filter((tag) => tag !== tagToRemove));
-  };
-
   return (
     <Modal
-      animationType="none"
+      animationType="slide"
       transparent={true}
       visible={modalVisible}
       onRequestClose={() => setModalVisible(false)}>
@@ -138,7 +107,7 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}>
-            <Text>X</Text>
+            <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
 
           <View style={styles.contentContainer}>

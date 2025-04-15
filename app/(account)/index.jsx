@@ -72,12 +72,10 @@ const AccountScreen = () => {
   const handleMealPress = (meal) => {
     console.log("AccountScreen: handleMealPress - Opening modal");
     setSelectedMeal(meal);
-    setIsMealModalVisible(true);
   };
 
   const handleModalClose = () => {
     console.log("AccountScreen: handleModalClose - Closing modal");
-    setIsMealModalVisible(false);
     setSelectedMeal(null);
     refreshMeals();
   };
@@ -127,26 +125,14 @@ const AccountScreen = () => {
         <MaterialIcons name="logout" size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* Modal for Editing/Deleting Meal */}
-      <Modal
-        animationType="none"
-        transparent={true}
-        visible={isMealModalVisible}
-        key={isMealModalVisible}
-        onRequestClose={handleModalClose}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            {selectedMeal && (
-              <MealItem
-                meal={selectedMeal}
-                onClose={handleModalClose}
-                refreshMeals={refreshMeals}
-                visible={isMealModalVisible}
-              />
-            )}
-          </View>
-        </View>
-      </Modal>
+      {/* Pass selectedMeal to MealItem */}
+      {selectedMeal && (
+        <MealItem
+          meal={selectedMeal}
+          onClose={handleModalClose}
+          refreshMeals={refreshMeals}
+        />
+      )}
     </View>
   );
 };

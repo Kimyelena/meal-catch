@@ -22,8 +22,9 @@ import { getOptimizedImageUri, preloadImages } from "../utils/imageUtils";
 
 const { height } = Dimensions.get("window");
 
-const MealItemView = ({ meal, onClose, visible }) => {
+const MealItemView = ({ meal, onClose }) => {
   const modalAnimation = useRef(new Animated.Value(height)).current;
+  const [modalVisible, setModalVisible] = useState(true);
   const [showPhoneNumber, setShowPhoneNumber] = useState(false);
   const [mealDetails, setMealDetails] = useState({});
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -66,15 +67,15 @@ const MealItemView = ({ meal, onClose, visible }) => {
   };
 
   useEffect(() => {
-    if (visible && meal.user_id) {
+    if (modalVisible && meal.user_id) {
       fetchUserDetails();
     } else {
       setMealDetails({});
     }
-  }, [visible, meal.user_id]);
+  }, [modalVisible, meal.user_id]);
 
   useEffect(() => {
-    if (visible) {
+    if (modalVisible) {
       Animated.timing(modalAnimation, {
         toValue: height * 0.65,
         duration: 300,
@@ -85,9 +86,16 @@ const MealItemView = ({ meal, onClose, visible }) => {
         toValue: height,
         duration: 300,
         useNativeDriver: false,
-      }).start();
+      }).start(() => {
+        modalAnimation.setValue(height);
+        onClose();
+      });
     }
-  }, [visible]);
+  }, [modalVisible]);
+
+  useEffect(() => {
+    console.log("MealItemView modal visible:", modalVisible);
+  }, [modalVisible]);
 
   const handlePhonePress = () => {
     setShowPhoneNumber(!showPhoneNumber);
@@ -235,6 +243,8 @@ const MealItemView = ({ meal, onClose, visible }) => {
                     size={20}
                     color={copyFeedback ? "#4CAF50" : "#01766A"} // Changed color for copy icon
                   />
+                  {/* Add a Text component for accessibility */}
+                  <Text style={{ display: "none" }}>Copy</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -252,18 +262,22 @@ const MealItemView = ({ meal, onClose, visible }) => {
 
   return (
     <Modal
-      animationType="none"
+      animationType="slide" // Ensure consistent animation
       transparent={true}
-      visible={visible}
-      onRequestClose={onClose}
+      visible={modalVisible}
+      onRequestClose={() => setModalVisible(false)}
       style={{
         justifyContent: "flex-end",
       }}>
-      <View style={styles.modalOverlay}>
+      <View
+        style={[
+          styles.modalOverlay,
+          { zIndex: 10, pointerEvents: modalVisible ? "auto" : "none" }, // Prevent background interaction
+        ]}>
         <Animated.View
           style={[styles.modalContent, { height: modalAnimation }]}>
           {renderContent()}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -276,6 +290,7 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
+    zIndex: 10, // Ensure this modal is on top
   },
   modalContent: {
     backgroundColor: "white",
