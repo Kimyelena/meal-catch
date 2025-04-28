@@ -47,6 +47,15 @@ export const CategoryBadge = ({ category }) => {
   );
 };
 
+// Validate that a meal has an image before adding
+export const validateMealImage = (image) => {
+  if (!image) {
+    Alert.alert("Validation Error", "A meal image is required.");
+    return false;
+  }
+  return true;
+};
+
 // Bundle functions and components into a default export
 const mealUtils = {
   formatMealDate,
@@ -60,7 +69,7 @@ export const fetchMeals = async (
   userId,
   setMeals,
   setLoading = true,
-  setError,
+  setError = () => {}, // Default to no-op function
   isUserSpecific = false
 ) => {
   console.log("fetchMeals - start", { userId, isUserSpecific });

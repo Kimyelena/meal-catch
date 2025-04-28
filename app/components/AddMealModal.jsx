@@ -153,6 +153,11 @@ const AddMealModal = ({ modalVisible, setModalVisible, addMeal }) => {
       return;
     }
 
+    if (originalImageUris.length === 0) {
+      alert("Please add at least one image.");
+      return;
+    }
+
     try {
       setLoading(true);
 
