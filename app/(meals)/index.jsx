@@ -6,8 +6,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Image,
   RefreshControl,
+  Image,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
