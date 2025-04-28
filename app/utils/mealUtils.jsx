@@ -1,17 +1,17 @@
-import React from 'react';
-import { View, Text } from 'react-native';
+import React from "react";
+import { View, Text } from "react-native";
 import mealService from "../services/mealService";
 import { Alert } from "react-native";
 
 // Format date for meal display
 export const formatMealDate = (dateString) => {
-  if (!dateString) return '';
-  
+  if (!dateString) return "";
+
   try {
     const date = new Date(dateString);
     return date.toLocaleDateString();
   } catch (error) {
-    console.error('Error formatting date:', error);
+    console.error("Error formatting date:", error);
     return dateString;
   }
 };
@@ -19,27 +19,28 @@ export const formatMealDate = (dateString) => {
 // Get meal category label
 export const getCategoryLabel = (category) => {
   const categories = {
-    breakfast: 'Breakfast',
-    lunch: 'Lunch',
-    dinner: 'Dinner',
-    snack: 'Snack',
-    dessert: 'Dessert',
-    other: 'Other'
+    breakfast: "Breakfast",
+    lunch: "Lunch",
+    dinner: "Dinner",
+    snack: "Snack",
+    dessert: "Dessert",
+    other: "Other",
   };
-  
-  return categories[category?.toLowerCase()] || 'Other';
+
+  return categories[category?.toLowerCase()] || "Other";
 };
 
 // Render meal category badge
 export const CategoryBadge = ({ category }) => {
   return (
-    <View style={{ 
-      backgroundColor: '#f0f0f0', 
-      paddingHorizontal: 8, 
-      paddingVertical: 3, 
-      borderRadius: 10 
-    }}>
-      <Text style={{ color: '#333', fontSize: 12 }}>
+    <View
+      style={{
+        backgroundColor: "#f0f0f0",
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 10,
+      }}>
+      <Text style={{ color: "#333", fontSize: 12 }}>
         {getCategoryLabel(category)}
       </Text>
     </View>
@@ -50,7 +51,7 @@ export const CategoryBadge = ({ category }) => {
 const mealUtils = {
   formatMealDate,
   getCategoryLabel,
-  CategoryBadge
+  CategoryBadge,
 };
 
 export default mealUtils;

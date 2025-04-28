@@ -19,5 +19,14 @@ const storage = new Storage(client);
 const account = new Account(client);
 const databases = new Databases(client);
 
+// Function to get optimized image URL
+const getOptimizedImageUrl = (fileId, width = 300, height = 300) => {
+  return storage.getFilePreview(config.bucketId, fileId, {
+    width,
+    height,
+    quality: 80,
+  }).href;
+};
+
 // Export everything needed
-export { client, storage, account, databases, config, ID };
+export { client, storage, account, databases, config, ID, getOptimizedImageUrl };

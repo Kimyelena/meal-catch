@@ -61,7 +61,15 @@ const MealListScreen = () => {
       key={item.$id}
       onPress={() => handleMealPress(item)}
       style={styles.mealCard}>
-      <Image source={{ uri: item.imageUris[0] }} style={styles.mealImage} />
+      <Image
+        source={
+          item.imageUris[0]
+            ? { uri: item.imageUris[0] }
+            : require("../../assets/placeholder.png") // Fallback placeholder
+        }
+        style={styles.mealImage}
+        resizeMode="cover"
+      />
     </TouchableOpacity>
   );
 
@@ -78,7 +86,6 @@ const MealListScreen = () => {
             setMeals(newMeals);
             resolve();
           },
-          () => {},
           (newError) => {
             setError(newError);
             resolve();
@@ -99,7 +106,6 @@ const MealListScreen = () => {
       ) : (
         <>
           {error && <Text style={styles.errorText}>{error}</Text>}
-
           <ScrollView
             refreshControl={
               <RefreshControl
@@ -212,6 +218,7 @@ const styles = StyleSheet.create({
   },
   modalCloseText: {
     color: "white",
+    textAlign: "center",
   },
   emptyContainer: {
     flex: 1,
