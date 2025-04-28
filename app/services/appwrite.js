@@ -29,4 +29,12 @@ const getOptimizedImageUrl = (fileId, width = 300, height = 300) => {
 };
 
 // Export everything needed
-export { client, storage, account, databases, config, ID, getOptimizedImageUrl };
+export {
+  client,
+  storage,
+  account,
+  databases,
+  config,
+  ID,
+  getOptimizedImageUrl,
+};
