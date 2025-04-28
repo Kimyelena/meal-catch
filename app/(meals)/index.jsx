@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   categoryContainer: {
-    marginBottom: 15,
+    marginBottom: 10,
   },
   categoryTitle: {
     fontSize: 18,
@@ -181,8 +181,8 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   mealCard: {
-    width: 155,
-    height: 155,
+    width: 150,
+    height: 150,
     marginRight: 5,
     borderRadius: 5,
     overflow: "hidden",

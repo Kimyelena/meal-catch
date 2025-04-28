@@ -46,6 +46,10 @@ const AuthScreen = () => {
     }
   };
 
+  const navigateToAccount = () => {
+    router.push("/(account)"); // Ensure this route exists in your app
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>{isRegistering ? "Sign Up" : "Login"}</Text>
@@ -115,7 +119,14 @@ const AuthScreen = () => {
             : "Don't have an account? Sign Up"}
         </Text>
       </TouchableOpacity>
-      {user && <Text>Phone Number: {user.phone}</Text>}
+      {user && (
+        <>
+          <Text>Phone Number: {user.phone}</Text>
+          <TouchableOpacity style={styles.button} onPress={navigateToAccount}>
+            <Text style={styles.buttonText}>Go to Account</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };
