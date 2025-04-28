@@ -14,6 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import MealCard from "../components/MealCard";
 
 const { width } = Dimensions.get("window");
 import mealService from "../services/mealService";
@@ -83,12 +84,7 @@ const AccountScreen = () => {
   };
 
   const renderMealItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.mealCard}
-      onPress={() => handleMealPress(item)}
-      key={item.$id}>
-      <Image source={{ uri: item.imageUris[0] }} style={styles.mealImage} />
-    </TouchableOpacity>
+    <MealCard item={item} onPress={handleMealPress} />
   );
 
   const refreshMeals = async () => {
@@ -138,8 +134,6 @@ const AccountScreen = () => {
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <MaterialIcons name="logout" size={24} color="#fff" />
       </TouchableOpacity>
-
-      {/* Ensure Modal is rendered outside of FlatList */}
       {selectedMeal && (
         <Modal
           visible={!!selectedMeal}
@@ -179,6 +173,10 @@ const styles = StyleSheet.create({
   mealImage: {
     width: "100%",
     height: "100%",
+  },
+  imageLoader: {
+    position: "absolute",
+    alignSelf: "center",
   },
   logoutButton: {
     backgroundColor: "#b00020",

@@ -432,8 +432,9 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: 100,
-    height: 10,
+    height: 100, // Ensure the height matches the width for square images
     borderRadius: 8,
+    resizeMode: "cover", // Maintain aspect ratio while filling the container
   },
   deleteButton: {
     position: "absolute",

@@ -12,12 +12,23 @@ import {
   Button,
   Animated,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import Icon from "react-native-vector-icons/MaterialIcons";
 import mealService from "../services/mealService";
 import * as ImagePicker from "expo-image-picker";
 
 const { height } = Dimensions.get("window");
+
+const prefetchImage = async (uri) => {
+  try {
+    const response = await fetch(uri, { method: "HEAD" });
+    return response.ok; // Returns true if the URL is valid
+  } catch (error) {
+    console.error("Error prefetching image:", uri, error);
+    return false;
+  }
+};
 
 const MealItem = ({ meal, onClose, refreshMeals }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -28,6 +39,7 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
   const [newTag, setNewTag] = useState("");
   const modalAnimation = useRef(new Animated.Value(0)).current;
   const [modalVisible, setModalVisible] = useState(true);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     if (modalVisible) {
@@ -95,6 +107,44 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
     ]);
   };
 
+  const renderImage = (uri) => {
+    const [imageError, setImageError] = useState(false);
+    const [isValidImage, setIsValidImage] = useState(false);
+
+    useEffect(() => {
+      const validateImage = async () => {
+        const isValid = await prefetchImage(uri);
+        setIsValidImage(isValid);
+      };
+      validateImage();
+    }, [uri]);
+
+    return (
+      <View style={styles.imageWrapper}>
+        {!imageLoaded && !imageError && (
+          <ActivityIndicator
+            style={styles.imageLoader}
+            size="small"
+            color="#007bff"
+          />
+        )}
+        <Image
+          style={styles.detailImage}
+          source={
+            imageError || !isValidImage
+              ? require("../../assets/placeholder.png") // Fallback image
+              : { uri }
+          }
+          onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            console.error("Failed to load image:", uri);
+            setImageError(true);
+          }}
+        />
+      </View>
+    );
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -116,16 +166,7 @@ const MealItem = ({ meal, onClose, refreshMeals }) => {
               <ScrollView horizontal={true} style={styles.imageScrollView}>
                 {editedImageUris &&
                   editedImageUris.map((uri, index) => (
-                    <View key={index} style={styles.imageWrapper}>
-                      <Image source={{ uri }} style={styles.detailImage} />
-                      {isEditing && (
-                        <TouchableOpacity
-                          onPress={() => handleDeleteImage(index)}
-                          style={styles.deleteButton}>
-                          <Text style={styles.deleteButtonText}>✕</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                    <View key={index}>{renderImage(uri)}</View>
                   ))}
               </ScrollView>
 
@@ -289,7 +330,12 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: "relative",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 5,
+  },
+  imageLoader: {
+    position: "absolute",
   },
   deleteButton: {
     position: "absolute",
