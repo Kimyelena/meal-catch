@@ -16,7 +16,10 @@ const HomeScreen = () => {
 
       <TouchableOpacity
         style={styles.button}
-        onPress={() => router.push("/(auth)")}>
+        onPress={() => {
+          console.log("Get Started button pressed"); // Debug log
+          router.push("/(auth)");
+        }}>
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>
