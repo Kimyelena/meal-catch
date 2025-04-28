@@ -146,13 +146,11 @@ const AccountScreen = () => {
           transparent={true}
           animationType="slide"
           onRequestClose={handleModalClose}>
-          <View style={styles.modalOverlay}>
-            <MealItem
-              meal={selectedMeal}
-              onClose={handleModalClose}
-              refreshMeals={refreshMeals}
-            />
-          </View>
+          <MealItem
+            meal={selectedMeal}
+            onClose={handleModalClose}
+            refreshMeals={refreshMeals}
+          />
         </Modal>
       )}
     </View>
