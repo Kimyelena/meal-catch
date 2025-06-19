@@ -40,7 +40,7 @@ const mealService = {
   },
 
   async addMeal(
-    user_id,
+    user_id, // This parameter is being passed from AddMealModal, but mealService.addMeal expects it directly
     name,
     description,
     imageUris = [],
@@ -64,13 +64,11 @@ const mealService = {
       throw new Error("Missing Database or Collection ID configuration.");
     }
 
-    // Process images - fix the data handling
     let uploadedImageUrls = [];
     try {
       if (imageUris && imageUris.length > 0) {
         console.log(`Attempting to upload ${imageUris.length} images...`);
 
-        // Direct call to imageService
         const uploadResults = await imageService.uploadImagesAndGetUrls(
           imageUris
         );
@@ -82,7 +80,6 @@ const mealService = {
         );
 
         if (Array.isArray(uploadResults)) {
-          // Accept any non-empty string URLs
           uploadedImageUrls = uploadResults
             .map((url) => String(url))
             .filter((url) => url && url.length > 0 && url.includes("://"));
@@ -98,7 +95,13 @@ const mealService = {
       }
     } catch (imageError) {
       console.error("Error uploading images:", imageError);
-      // Continue with meal creation with empty image array
+      // We will re-throw this error so MealListScreen can catch it
+      // If you want to proceed with meal creation even if image upload fails,
+      // you can remove this throw, but then handle `uploadedImageUrls` being empty.
+      // For now, it's safer to fail early if images are mandatory.
+      throw new Error(
+        `Failed to upload images: ${imageError.message || imageError}`
+      );
     }
 
     console.log("Final uploadedImageUrls:", uploadedImageUrls);
@@ -108,7 +111,7 @@ const mealService = {
         name,
         createdAt: new Date().toISOString(),
         user_id,
-        imageUris: uploadedImageUrls, // This should now have the URLs or be empty
+        imageUris: uploadedImageUrls,
         description,
         tags,
         category,
@@ -120,21 +123,18 @@ const mealService = {
         dbId,
         colId,
         mealData,
-        ID.unique()
+        ID.unique() // ID should come before data object for Appwrite SDK
       );
 
       console.log("Meal created successfully with ID:", response.$id);
-      return {
-        data: response,
-        error: null,
-        imageUploadStatus: uploadedImageUrls.length > 0 ? "success" : "failed",
-      };
+      // --- IMPORTANT CHANGE HERE ---
+      // Return the raw response object directly for optimistic UI update
+      return response;
     } catch (error) {
       console.error("Error creating meal document:", error);
-      return {
-        data: null,
-        error: error.message || "Failed to save meal to database",
-      };
+      // --- IMPORTANT CHANGE HERE ---
+      // Throw the error so it can be caught by handleAddMeal in MealListScreen
+      throw error;
     }
   },
 

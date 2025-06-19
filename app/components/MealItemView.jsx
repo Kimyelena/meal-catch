@@ -126,18 +126,6 @@ const MealItemView = ({ meal, onClose }) => {
     console.log("Refreshing meal details...");
     setRefreshing(true);
 
-    // Kód pro refreshování obrázků pomocí preloadImages je odstraněn,
-    // protože cachování řeší expo-image automaticky.
-    // Pokud potřebujete vynutit nové stažení obrázků (např. po změně na serveru),
-    // budete muset na serveru změnit URL obrázku (např. přidáním verze do názvu souboru).
-    // Necháme to na automatice expo-image.
-    // if (meal.imageUris && meal.imageUris.length > 0) {
-    //   console.log("Refreshing images...");
-    //   preloadImages(
-    //     meal.imageUris.map((uri) => `${uri}?refresh=${Date.now()}`)
-    //   );
-    // }
-
     await fetchUserDetails();
   };
 
