@@ -17,8 +17,9 @@ import {
 } from "react-native";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import authService from "../services/authService";
-import CachedImage from "./CachedImage";
-import { getOptimizedImageUri, preloadImages } from "../utils/imageUtils";
+// import CachedImage from "./CachedImage"; // Tuto řádku jsme odstranili
+// import { getOptimizedImageUri, preloadImages } from "../utils/imageUtils"; // Tuto řádku jsme odstranili
+import { Image } from "expo-image"; // <-- NOVÝ IMPORT PRO EXPO-IMAGE
 
 const { height } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ const MealItemView = ({ meal, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Kód pro preloadImages jsme odstranili, protože expo-image to zvládá automaticky
   useEffect(() => {
     if (meal && meal.imageUris && meal.imageUris.length > 0) {
       console.log("Meal ID:", meal.id, "Images:", meal.imageUris);
@@ -39,8 +41,7 @@ const MealItemView = ({ meal, onClose }) => {
       meal.imageUris.forEach((uri, i) => {
         console.log(`Image ${i}: ${uri}`);
       });
-
-      preloadImages(meal.imageUris);
+      // preloadImages(meal.imageUris); // Tato řádka je odstraněna
     }
   }, [meal]);
 
@@ -125,12 +126,17 @@ const MealItemView = ({ meal, onClose }) => {
     console.log("Refreshing meal details...");
     setRefreshing(true);
 
-    if (meal.imageUris && meal.imageUris.length > 0) {
-      console.log("Refreshing images...");
-      preloadImages(
-        meal.imageUris.map((uri) => `${uri}?refresh=${Date.now()}`)
-      );
-    }
+    // Kód pro refreshování obrázků pomocí preloadImages je odstraněn,
+    // protože cachování řeší expo-image automaticky.
+    // Pokud potřebujete vynutit nové stažení obrázků (např. po změně na serveru),
+    // budete muset na serveru změnit URL obrázku (např. přidáním verze do názvu souboru).
+    // Necháme to na automatice expo-image.
+    // if (meal.imageUris && meal.imageUris.length > 0) {
+    //   console.log("Refreshing images...");
+    //   preloadImages(
+    //     meal.imageUris.map((uri) => `${uri}?refresh=${Date.now()}`)
+    //   );
+    // }
 
     await fetchUserDetails();
   };
@@ -165,16 +171,18 @@ const MealItemView = ({ meal, onClose }) => {
           showsHorizontalScrollIndicator={false}>
           {meal.imageUris &&
             meal.imageUris.map((uri, index) => {
-              const cacheBustUri = `${uri}${
-                uri.includes("?") ? "&" : "?"
-              }t=${Date.now()}`;
-              console.log(`Rendering image ${index}:`, cacheBustUri);
+              // Zde je klíčová změna: Používáme Image z expo-image
+              // a předáváme čisté URI bez cacheBust
+              // const cacheBustUri = `${uri}${uri.includes("?") ? "&" : "?"}t=${Date.now()}`; // Tuto řádku jsme odstranili
+              console.log(`Rendering image ${index}:`, uri); // Teď logujeme čisté URI
               return (
-                <CachedImage
+                <Image // <-- Používáme komponentu Image z expo-image
                   key={`meal-${meal.id || "unknown"}-image-${index}`}
-                  uri={cacheBustUri}
+                  source={{ uri: uri }} // <-- Předáváme čisté URI
                   style={styles.detailImage}
-                  resizeMode="cover"
+                  contentFit="cover" // <-- Používáme contentFit místo resizeMode
+                  // Volitelně můžete přidat placeholder nebo blurhash pro lepší UX
+                  // placeholder={{ blurhash: 'LKNK9@xuxuay' }}
                 />
               );
             })}
@@ -312,7 +320,7 @@ const styles = StyleSheet.create({
   detailImage: {
     width: 200,
     height: 200,
-    resizeMode: "cover",
+    // resizeMode: "cover", // Tohle nahrazujeme contentFit v expo-image
     marginRight: 10,
   },
   modalDescription: {

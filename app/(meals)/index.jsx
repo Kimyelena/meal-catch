@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   RefreshControl,
-  Image,
+  // Image, // <-- Odstranili jsme Image z react-native
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth } from "../contexts/AuthContext";
@@ -15,6 +15,7 @@ import { fetchMeals } from "../utils/mealUtils";
 import AddMealModal from "../components/AddMealModal";
 import mealService from "../services/mealService";
 import MealItemView from "../components/MealItemView";
+import { Image } from "expo-image"; // <-- NOVÝ IMPORT Z EXPO-IMAGE
 
 const MealListScreen = () => {
   const { user, loading: authLoading } = useAuth();
@@ -61,14 +62,16 @@ const MealListScreen = () => {
       key={item.$id}
       onPress={() => handleMealPress(item)}
       style={styles.mealCard}>
-      <Image
+      <Image // <-- Používáme Image z expo-image
         source={
-          item.imageUris[0]
+          item.imageUris && item.imageUris[0]
             ? { uri: item.imageUris[0] }
             : require("../../assets/placeholder.png") // Fallback placeholder
         }
         style={styles.mealImage}
-        resizeMode="cover"
+        contentFit="cover" // <-- NOVÁ PROP contentFit
+        // Volitelně můžete přidat placeholder pro plynulejší načítání
+        // placeholder={{ blurhash: 'LKNK9@xuxuay' }}
       />
     </TouchableOpacity>
   );
